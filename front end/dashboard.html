@@ -1,0 +1,11 @@
+async function loadData() {
+  const res = await fetch("https://YOUR-RENDER-BACKEND-URL/api/sensor-data");
+  const data = await res.json();
+
+  document.getElementById("temp").innerText = data.temperature;
+  document.getElementById("humidity").innerText = data.humidity;
+  document.getElementById("time").innerText = new Date(data.timestamp).toLocaleTimeString();
+}
+
+setInterval(loadData, 3000);
+loadData();
