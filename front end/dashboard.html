@@ -1,5 +1,5 @@
 async function loadData() {
-  const res = await fetch("https://YOUR-RENDER-BACKEND-URL/api/sensor-data");
+  const res = await fetch("https://movers-system.onrender.com");
   const data = await res.json();
 
   document.getElementById("temp").innerText = data.temperature;
