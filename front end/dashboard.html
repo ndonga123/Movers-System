@@ -1,11 +1,19 @@
-async function loadData() {
-  const res = await fetch("https://movers-system.onrender.com");
-  const data = await res.json();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
 
-  document.getElementById("temp").innerText = data.temperature;
-  document.getElementById("humidity").innerText = data.humidity;
-  document.getElementById("time").innerText = new Date(data.timestamp).toLocaleTimeString();
-}
+  <h2>IoT Movers Dashboard</h2>
 
-setInterval(loadData, 3000);
-loadData();
+  <p>Temperature: <span id="temp">--</span> °C</p>
+  <p>Humidity: <span id="humidity">--</span> %</p>
+  <p>Last Update: <span id="time">--</span></p>
+
+  <!-- LINK JS HERE -->
+  <script src="../js/dashboard.js"></script>
+</body>
+</html>
