@@ -1,23 +1,26 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
+const http = require("http");
+const { Server } = require("socket.io");
 
-const authRoutes = require("./routes/auth");
-const vehicleRoutes = require("./routes/vehicles");
-const sensorRoutes = require("./routes/sensors");
+const connectDB = require("./db");
+connectDB();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send("IoT Movers Transport System API Running");
-});
+// ROUTES
+app.use("/api/auth", require("./routes/auth.routes"));
+app.use("/api/summary", require("./routes/summary.routes"));
+app.use("/api/deliveries", require("./routes/delivery.routes"));
+app.use("/api/vehicle", require("./routes/Vehicle.route")); // 👈 matches your filename
 
-app.use("/api/auth", authRoutes);
-app.use("/api/vehicles", vehicleRoutes);
-app.use("/api/sensors", sensorRoutes);
-
+const server = http.createServer(app);
+new Server(server, { cors: { origin: "*" } });
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+server.listen(PORT, () =>
+  console.log("Backend running on http://localhost:" + PORT)
+);

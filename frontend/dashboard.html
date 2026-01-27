@@ -1,19 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Dashboard</title>
-  <link rel="stylesheet" href="../css/styles.css">
+<link rel="stylesheet" href="style.css">
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_KEY"></script>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+if(!localStorage.getItem("auth")) location.href="login.html";
+</script>
 </head>
 <body>
+<div class="layout">
+<aside class="sidebar">
+<h2>IoT Movers</h2>
+<a>Dashboard</a>
+<a>Vehicles</a>
+<a>Alerts</a>
+<button onclick="document.body.classList.toggle('dark')">🌙</button>
+<a href="login.html">Logout</a>
+</aside>
 
-  <h2>IoT Movers Dashboard</h2>
+<main>
+<div class="top">
+<div class="card">GPS: <span id="gps"></span></div>
+<div class="card">Active: 3</div>
+<div class="card">Temp: <span id="temp"></span>°C | <span id="hum"></span>%</div>
+</div>
 
-  <p>Temperature: <span id="temp">--</span> °C</p>
-  <p>Humidity: <span id="humidity">--</span> %</p>
-  <p>Last Update: <span id="time">--</span></p>
+<div class="content">
+<div class="card big">
+<h3>Vehicle Tracking</h3>
+<div id="map" class="map"></div>
+</div>
 
-  <!-- LINK JS HERE -->
-  <script src="../js/dashboard.js"></script>
+<div class="card">
+<h3>Sensor Data</h3>
+<p>Temperature: <span id="temp2"></span>°C</p>
+<p>Humidity: <span id="hum2"></span>%</p>
+</div>
+</div>
+
+<div class="card">
+<h3>Delivery Log</h3>
+<table>
+<thead><tr><th>Vehicle</th><th>Driver</th><th>Status</th></tr></thead>
+<tbody id="table"></tbody>
+</table>
+</div>
+</main>
+</div>
+<script src="app.js"></script>
 </body>
 </html>

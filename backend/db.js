@@ -1,10 +1,6 @@
-const { Pool } = require("pg");
+const mongoose = require("mongoose");
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
-
-module.exports = pool;
+module.exports = async () => {
+  await mongoose.connect(process.env.MONGO_URI);
+  console.log("MongoDB connected");
+};
