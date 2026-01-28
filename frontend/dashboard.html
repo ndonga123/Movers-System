@@ -1,54 +1,102 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<link rel="stylesheet" href="css/style.css">
-<script src="js/app.js"></script>
-<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_KEY"></script>
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-<script>
-if(!localStorage.getItem("auth")) location.href="login.html";
-</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IoT Movers Dashboard</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <script>
+    // simple auth check (optional)
+    if (!localStorage.getItem("auth")) {
+      console.warn("Not logged in");
+    }
+  </script>
 </head>
 <body>
+
 <div class="layout">
-<aside class="sidebar">
-<h2>IoT Movers</h2>
-<a>Dashboard</a>
-<a>Vehicles</a>
-<a>Alerts</a>
-<button onclick="document.body.classList.toggle('dark')">🌙</button>
-<a href="login.html">Logout</a>
-</aside>
 
-<main>
-<div class="top">
-<div class="card">GPS: <span id="gps"></span></div>
-<div class="card">Active: 3</div>
-<div class="card">Temp: <span id="temp"></span>°C | <span id="hum"></span>%</div>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <h2>🚚 IoT Movers</h2>
+    <nav>
+      <a class="active">Dashboard</a>
+      <a>Vehicles</a>
+      <a>Alerts</a>
+      <a>Reports</a>
+    </nav>
+    <button class="toggle" onclick="document.body.classList.toggle('dark')">
+      🌙 Dark Mode
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- TOP CARDS -->
+    <section class="top-cards">
+      <div class="card">
+        <h4>GPS</h4>
+        <p>Nairobi, KE</p>
+      </div>
+      <div class="card">
+        <h4>Active Vehicles</h4>
+        <p>3</p>
+      </div>
+      <div class="card">
+        <h4>Temperature</h4>
+        <p>24°C | 60%</p>
+      </div>
+    </section>
+
+    <!-- MAP + SENSOR -->
+    <section class="content">
+      <div class="card large">
+        <h3>Vehicle Tracking</h3>
+        <div class="map-placeholder">
+          🗺️ Map will appear here
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Sensor Data</h3>
+        <p>Temperature: <strong>24°C</strong></p>
+        <p>Humidity: <strong>60%</strong></p>
+        <p>Status: <span class="ok">Normal</span></p>
+      </div>
+    </section>
+
+    <!-- TABLE -->
+    <section class="card table-card">
+      <h3>Delivery Log</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Vehicle</th>
+            <th>Driver</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Truck 01</td>
+            <td>James</td>
+            <td class="ok">On Route</td>
+          </tr>
+          <tr>
+            <td>Van 02</td>
+            <td>Amina</td>
+            <td class="warn">Delayed</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+  </main>
 </div>
 
-<div class="content">
-<div class="card big">
-<h3>Vehicle Tracking</h3>
-<div id="map" class="map"></div>
-</div>
-
-<div class="card">
-<h3>Sensor Data</h3>
-<p>Temperature: <span id="temp2"></span>°C</p>
-<p>Humidity: <span id="hum2"></span>%</p>
-</div>
-</div>
-
-<div class="card">
-<h3>Delivery Log</h3>
-<table>
-<thead><tr><th>Vehicle</th><th>Driver</th><th>Status</th></tr></thead>
-<tbody id="table"></tbody>
-</table>
-</div>
-</main>
-</div>
-<script src="app.js"></script>
 </body>
 </html>
