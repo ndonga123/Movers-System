@@ -4,6 +4,9 @@
 <meta charset="UTF-8" />
 <title>IoT Movers Dashboard</title>
 <link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
 </head>
 
 <body>
@@ -34,9 +37,10 @@
         <div class="fake-chart"></div>
       </div>
 
-      <div class="box">
-        <h3>GPS Route</h3>
-        <div class="fake-map"></div>
+      <div class="card big">
+  <h3>GPS Route</h3>
+  <div id="map" style="height:300px;border-radius:12px;"></div>
+</div>
       </div>
     </div>
 
