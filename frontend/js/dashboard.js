@@ -6,31 +6,79 @@ setInterval(() => {
   document.getElementById("temp").innerText = (20 + Math.random() * 10).toFixed(1) + "°C";
   document.getElementById("hum").innerText = (50 + Math.random() * 20).toFixed(1) + "%";
 }, 2000);
-// Initial position (Nairobi)
-let lat = -1.2997;
-let lng = 36.8219;
+// Nairobi route points (fake route path)
+const route = [
+  [-1.2997, 36.8219],
+  [-1.2965, 36.8260],
+  [-1.2940, 36.8295],
+  [-1.2915, 36.8322],
+  [-1.2890, 36.8350],
+  [-1.2865, 36.8380],
+];
 
-// Create map
-const map = L.map("map").setView([lat, lng], 13);
+let index = 0;
 
-// Load real OpenStreetMap tiles
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19,
-}).addTo(map);
-
-// Add marker
-const marker = L.marker([lat, lng]).addTo(map)
-  .bindPopup("Vehicle 1")
-  .openPopup();
-
-// Simulate real GPS movement
+// Move marker along route
 setInterval(() => {
-  lat += (Math.random() - 0.5) * 0.001;
-  lng += (Math.random() - 0.5) * 0.001;
+  index = (index + 1) % route.length;
+  const [lat, lng] = route[index];
 
   marker.setLatLng([lat, lng]);
-  map.setView([lat, lng]);
+  map.panTo([lat, lng]);
 
   document.getElementById("gps").innerText =
     lat.toFixed(5) + ", " + lng.toFixed(5);
+}, 3000);
+const ctx = document.getElementById("sensorChart");
+
+let tempData = [25, 26, 27, 26, 28];
+let humData = [60, 62, 65, 64, 69];
+let labels = ["10:00", "10:03", "10:06", "10:09", "10:12"];
+
+const chart = new Chart(ctx, {
+  type: "line",
+  data: {
+    labels,
+    datasets: [
+      {
+        label: "Temperature °C",
+        data: tempData,
+        borderWidth: 2,
+        tension: 0.4
+      },
+      {
+        label: "Humidity %",
+        data: humData,
+        borderWidth: 2,
+        tension: 0.4
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: "top" }
+    }
+  }
+});
+
+// Simulate live sensor updates
+setInterval(() => {
+  const newTemp = 24 + Math.random() * 6;
+  const newHum = 55 + Math.random() * 20;
+
+  tempData.push(newTemp);
+  humData.push(newHum);
+  labels.push(new Date().toLocaleTimeString().slice(0,5));
+
+  if (tempData.length > 8) {
+    tempData.shift();
+    humData.shift();
+    labels.shift();
+  }
+
+  document.getElementById("temp").innerText = newTemp.toFixed(1);
+  document.getElementById("hum").innerText = newHum.toFixed(1);
+
+  chart.update();
 }, 3000);
