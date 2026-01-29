@@ -3,17 +3,21 @@
 <head>
 <meta charset="UTF-8" />
 <title>IoT Movers Dashboard</title>
-<link rel="stylesheet" href="css/styles.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-</script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<link rel="stylesheet" href="css/styles.css">
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
 <div class="layout">
 
+  <!-- SIDEBAR -->
   <aside class="sidebar">
     <h2>IoT Movers</h2>
     <a href="dashboard.html" class="active">Dashboard</a>
@@ -23,30 +27,36 @@
     <a href="login.html">Logout</a>
   </aside>
 
+  <!-- MAIN -->
   <main>
     <h1>Welcome to the Dashboard</h1>
     <p class="sub">Real-time fleet monitoring</p>
 
+    <!-- STATS -->
     <div class="cards">
       <div class="card">📍 GPS <span id="gps">-1.2997, 36.8219</span></div>
       <div class="card">🌡 Temp <span id="temp">25°C</span></div>
       <div class="card">💧 Humidity <span id="hum">62%</span></div>
     </div>
 
+    <!-- GRID -->
     <div class="grid">
-      <canvas id="sensorChart" height="150"></canvas>
-        <h3>Temperature & Humidity</h3>
-        <div class="fake-chart"></div>
-      </div>
 
+      <!-- CHART -->
       <div class="card big">
-  <h3>GPS Route</h3>
-  <div id="map" style="height:300px;border-radius:12px;"></div>
-</div>
+        <h3>Temperature & Humidity</h3>
+        <canvas id="sensorChart" height="120"></canvas>
       </div>
-    </div>
 
+      <!-- MAP -->
+      <div class="card big">
+        <h3>GPS Route</h3>
+        <div id="map" style="height:300px;border-radius:12px;"></div>
+      </div>
+
+    </div>
   </main>
+
 </div>
 
 <script src="js/dashboard.js"></script>
