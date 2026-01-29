@@ -1,12 +1,13 @@
-setInterval(() => {
-  const lat = (-1.2997 + Math.random() * 0.01).toFixed(5);
-  const lng = (36.8219 + Math.random() * 0.01).toFixed(5);
+// ========== MAP SETUP ==========
+var map = L.map("map").setView([-1.2997, 36.8219], 13);
 
-  document.getElementById("gps").innerText = `${lat}, ${lng}`;
-  document.getElementById("temp").innerText = (20 + Math.random() * 10).toFixed(1) + "°C";
-  document.getElementById("hum").innerText = (50 + Math.random() * 20).toFixed(1) + "%";
-}, 2000);
-// Nairobi route points (fake route path)
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19,
+}).addTo(map);
+
+var marker = L.marker([-1.2997, 36.8219]).addTo(map);
+
+// Nairobi route points
 const route = [
   [-1.2997, 36.8219],
   [-1.2965, 36.8260],
@@ -29,6 +30,17 @@ setInterval(() => {
   document.getElementById("gps").innerText =
     lat.toFixed(5) + ", " + lng.toFixed(5);
 }, 3000);
+
+// ========== SENSOR SIMULATION ==========
+setInterval(() => {
+  document.getElementById("temp").innerText =
+    (20 + Math.random() * 10).toFixed(1) + "°C";
+
+  document.getElementById("hum").innerText =
+    (50 + Math.random() * 20).toFixed(1) + "%";
+}, 2000);
+
+// ========== CHART ==========
 const ctx = document.getElementById("sensorChart");
 
 let tempData = [25, 26, 27, 26, 28];
@@ -44,32 +56,32 @@ const chart = new Chart(ctx, {
         label: "Temperature °C",
         data: tempData,
         borderWidth: 2,
-        tension: 0.4
+        tension: 0.4,
       },
       {
         label: "Humidity %",
         data: humData,
         borderWidth: 2,
-        tension: 0.4
-      }
-    ]
+        tension: 0.4,
+      },
+    ],
   },
   options: {
     responsive: true,
     plugins: {
-      legend: { position: "top" }
-    }
-  }
+      legend: { position: "top" },
+    },
+  },
 });
 
-// Simulate live sensor updates
+// Live updates
 setInterval(() => {
   const newTemp = 24 + Math.random() * 6;
   const newHum = 55 + Math.random() * 20;
 
   tempData.push(newTemp);
   humData.push(newHum);
-  labels.push(new Date().toLocaleTimeString().slice(0,5));
+  labels.push(new Date().toLocaleTimeString().slice(0, 5));
 
   if (tempData.length > 8) {
     tempData.shift();
