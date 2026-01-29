@@ -1,0 +1,133 @@
+* {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background: #f4f6fb;
+}
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  background: #1f3c88;
+  color: white;
+  padding: 20px;
+}
+
+.sidebar h2 {
+  margin-bottom: 30px;
+}
+
+.sidebar a {
+  display: block;
+  color: white;
+  text-decoration: none;
+  padding: 10px 0;
+}
+
+.sidebar a.active {
+  font-weight: bold;
+}
+
+.sidebar button {
+  margin: 20px 0;
+  padding: 5px;
+}
+
+/* Main */
+main {
+  flex: 1;
+  padding: 30px;
+}
+
+h1 {
+  margin-bottom: 5px;
+}
+
+.sub {
+  color: gray;
+  margin-bottom: 20px;
+}
+
+.cards {
+  display: flex;
+  gap: 15px;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  flex: 1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.grid {
+  margin-top: 30px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.box {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  height: 300px;
+}
+
+.fake-chart {
+  height: 200px;
+  background: linear-gradient(to right, orange, dodgerblue);
+  border-radius: 6px;
+}
+
+.fake-map {
+  height: 200px;
+  background: url("https://maps.gstatic.com/tactile/basepage/pegman_sherlock.png") center/cover;
+}
+.center{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+.login-box{
+  background:white;
+  padding:30px;
+  border-radius:10px;
+  width:300px;
+  text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
+}
+
+.login-box input{
+  width:100%;
+  padding:10px;
+  margin:10px 0;
+}
+
+.login-box button,.btn{
+  width:100%;
+  padding:10px;
+  background:#1f3c88;
+  color:white;
+  border:none;
+  cursor:pointer;
+  text-decoration:none;
+  display:block;
+  margin-top:10px;
+}
+
+.dark{
+  background:#121212;
+  color:white;
+}

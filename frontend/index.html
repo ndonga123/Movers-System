@@ -1,43 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IoT Movers Dashboard</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<meta charset="UTF-8">
+<title>IoT Movers</title>
+<link rel="stylesheet" href="css/styles.css">
 </head>
-<body>
+<body class="center">
 
-<header>
-  <h1>IoT-Driven Movers Transport System</h1>
-  <button id="logoutBtn">Logout</button>
-</header>
+<div class="login-box">
+  <h1>IoT Movers</h1>
+  <p>Fleet Monitoring System</p>
+  <a class="btn" href="login.html">Login</a>
+</div>
 
-<main class="dashboard">
-  <div class="card">
-    <div class="card-icon"><i class="fas fa-truck"></i></div>
-    <h2>Vehicles</h2>
-    <table id="vehicleTable">
-      <thead>
-        <tr><th>ID</th><th>Driver</th><th>Status</th></tr>
-      </thead>
-      <tbody><tr><td colspan="3">Loading...</td></tr></tbody>
-    </table>
-  </div>
-
-  <div class="card">
-    <div class="card-icon"><i class="fas fa-thermometer-half"></i></div>
-    <h2>Sensor Readings</h2>
-    <table id="sensorTable">
-      <thead>
-        <tr><th>Vehicle ID</th><th>Temperature</th><th>Humidity</th><th>Location</th><th>Last Update</th></tr>
-      </thead>
-      <tbody><tr><td colspan="5">Loading...</td></tr></tbody>
-    </table>
-  </div>
-</main>
-
-<script src="dashboard.js"></script>
 </body>
 </html>
