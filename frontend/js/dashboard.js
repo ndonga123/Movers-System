@@ -1,21 +1,23 @@
+function toggleDark() {
+  document.body.classList.toggle("dark");
+}
 // ========== MAP SETUP ==========
-var map = L.map("map").setView([-1.2997, 36.8219], 13);
+const map = L.map("map").setView([-1.2997, 36.8219], 13);
 
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19,
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+
+const routeControl = L.Routing.control({
+  waypoints: [
+    L.latLng(-1.2997, 36.8219),
+    L.latLng(-1.2965, 36.8260),
+    L.latLng(-1.2940, 36.8295),
+    L.latLng(-1.2915, 36.8322),
+    L.latLng(-1.2890, 36.8350),
+  ],
+  routeWhileDragging: false,
+  show: false,
+  addWaypoints: false
 }).addTo(map);
-
-var marker = L.marker([-1.2997, 36.8219]).addTo(map);
-
-// Nairobi route points
-const route = [
-  [-1.2997, 36.8219],
-  [-1.2965, 36.8260],
-  [-1.2940, 36.8295],
-  [-1.2915, 36.8322],
-  [-1.2890, 36.8350],
-  [-1.2865, 36.8380],
-];
 
 let index = 0;
 
@@ -57,21 +59,29 @@ const chart = new Chart(ctx, {
         data: tempData,
         borderWidth: 2,
         tension: 0.4,
+        fill: false
       },
       {
         label: "Humidity %",
         data: humData,
         borderWidth: 2,
         tension: 0.4,
-      },
-    ],
+        fill: false
+      }
+    ]
   },
   options: {
     responsive: true,
-    plugins: {
-      legend: { position: "top" },
+    maintainAspectRatio: false,
+    scales: {
+      y: { beginAtZero: false }
     },
-  },
+    plugins: {
+      legend: {
+        labels: { color: "#333" }
+      }
+    }
+  }
 });
 
 // Live updates

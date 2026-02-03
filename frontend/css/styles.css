@@ -84,7 +84,7 @@ h1 {
 }
 
 .fake-chart {
-  height: 200px;
+  height: 260px;
   background: linear-gradient(to right, orange, dodgerblue);
   border-radius: 6px;
 }
@@ -130,4 +130,21 @@ h1 {
 .dark{
   background:#121212;
   color:white;
+}
+body.dark {
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+body.dark .sidebar {
+  background: #020617;
+}
+
+body.dark .card {
+  background: #020617;
+  color: #e5e7eb;
+}
+
+body.dark canvas {
+  background: #020617;
 }
