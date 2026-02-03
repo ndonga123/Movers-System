@@ -1,106 +1,98 @@
-function toggleDark() {
-  document.body.classList.toggle("dark");
-}
-// ========== MAP SETUP ==========
-const map = L.map("map").setView([-1.2997, 36.8219], 13);
+// ================= MAP + ROAD ROUTING =================
+const map = L.map("map").setView([-1.2921, 36.8219], 13);
 
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19,
+}).addTo(map);
 
 const routeControl = L.Routing.control({
   waypoints: [
     L.latLng(-1.2997, 36.8219),
-    L.latLng(-1.2965, 36.8260),
-    L.latLng(-1.2940, 36.8295),
-    L.latLng(-1.2915, 36.8322),
-    L.latLng(-1.2890, 36.8350),
+    L.latLng(-1.2865, 36.8380),
   ],
   routeWhileDragging: false,
+  addWaypoints: false,
+  draggableWaypoints: false,
   show: false,
-  addWaypoints: false
 }).addTo(map);
 
+let routeLine = null;
+let routeCoords = [];
 let index = 0;
 
-// Move marker along route
-setInterval(() => {
-  index = (index + 1) % route.length;
-  const [lat, lng] = route[index];
+routeControl.on("routesfound", function (e) {
+  routeCoords = e.routes[0].coordinates;
 
-  marker.setLatLng([lat, lng]);
-  map.panTo([lat, lng]);
+  routeLine = L.polyline(routeCoords, { weight: 4 }).addTo(map);
+
+  marker = L.marker(routeCoords[0]).addTo(map);
+});
+
+// ================= LIVE VEHICLE =================
+setInterval(() => {
+  if (!routeCoords.length) return;
+
+  index = (index + 5) % routeCoords.length;
+  const pos = routeCoords[index];
+
+  marker.setLatLng(pos);
+  map.panTo(pos);
 
   document.getElementById("gps").innerText =
-    lat.toFixed(5) + ", " + lng.toFixed(5);
-}, 3000);
-
-// ========== SENSOR SIMULATION ==========
-setInterval(() => {
-  document.getElementById("temp").innerText =
-    (20 + Math.random() * 10).toFixed(1) + "°C";
-
-  document.getElementById("hum").innerText =
-    (50 + Math.random() * 20).toFixed(1) + "%";
+    pos.lat.toFixed(5) + ", " + pos.lng.toFixed(5);
 }, 2000);
 
-// ========== CHART ==========
-const ctx = document.getElementById("sensorChart");
+// ================= SENSOR DATA =================
+const gpsEl = document.getElementById("gps");
+const tempEl = document.getElementById("temp");
+const humEl = document.getElementById("hum");
 
-let tempData = [25, 26, 27, 26, 28];
-let humData = [60, 62, 65, 64, 69];
-let labels = ["10:00", "10:03", "10:06", "10:09", "10:12"];
+setInterval(() => {
+  const temp = 20 + Math.random() * 10;
+  const hum = 50 + Math.random() * 30;
+
+  tempEl.innerText = temp.toFixed(1) + "°C";
+  humEl.innerText = hum.toFixed(1) + "%";
+}, 2500);
+
+// ================= CHART =================
+const ctx = document.getElementById("sensorChart").getContext("2d");
 
 const chart = new Chart(ctx, {
   type: "line",
   data: {
-    labels,
+    labels: ["10:00", "10:05", "10:10", "10:15", "10:20"],
     datasets: [
       {
         label: "Temperature °C",
-        data: tempData,
-        borderWidth: 2,
+        data: [24, 26, 25, 27, 28],
         tension: 0.4,
-        fill: false
       },
       {
         label: "Humidity %",
-        data: humData,
-        borderWidth: 2,
+        data: [55, 60, 58, 63, 65],
         tension: 0.4,
-        fill: false
-      }
-    ]
+      },
+    ],
   },
   options: {
     responsive: true,
     maintainAspectRatio: false,
-    scales: {
-      y: { beginAtZero: false }
-    },
-    plugins: {
-      legend: {
-        labels: { color: "#333" }
-      }
-    }
-  }
+  },
 });
 
-// Live updates
+// ================= LIVE CHART =================
 setInterval(() => {
-  const newTemp = 24 + Math.random() * 6;
-  const newHum = 55 + Math.random() * 20;
+  chart.data.labels.push(new Date().toLocaleTimeString().slice(0, 5));
 
-  tempData.push(newTemp);
-  humData.push(newHum);
-  labels.push(new Date().toLocaleTimeString().slice(0, 5));
+  chart.data.datasets[0].data.push(20 + Math.random() * 10);
+  chart.data.datasets[1].data.push(50 + Math.random() * 30);
 
-  if (tempData.length > 8) {
-    tempData.shift();
-    humData.shift();
-    labels.shift();
+  if (chart.data.labels.length > 8) {
+    chart.data.labels.shift();
+    chart.data.datasets[0].data.shift();
+    chart.data.datasets[1].data.shift();
   }
-
-  document.getElementById("temp").innerText = newTemp.toFixed(1);
-  document.getElementById("hum").innerText = newHum.toFixed(1);
 
   chart.update();
 }, 3000);
