@@ -5,12 +5,14 @@
 <title>IoT Movers Dashboard</title>
 
 <link rel="stylesheet" href="css/styles.css">
-<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css">
 
 <!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Routing -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css"/>
+<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -19,46 +21,39 @@
 <body>
 <div class="layout">
 
-  <!-- SIDEBAR -->
   <aside class="sidebar">
     <h2>IoT Movers</h2>
-    <a href="dashboard.html" class="active">Dashboard</a>
-    <a href="#">Vehicles</a>
-    <a href="#">Reports</a>
+    <a class="active">Dashboard</a>
+    <a>Vehicles</a>
+    <a>Reports</a>
     <button onclick="toggleDark()">🌙</button>
     <a href="login.html">Logout</a>
   </aside>
 
-  <!-- MAIN -->
   <main>
     <h1>Welcome to the Dashboard</h1>
     <p class="sub">Real-time fleet monitoring</p>
 
-    <!-- STATS -->
     <div class="cards">
-      <div class="card">📍 GPS <span id="gps">-1.2997, 36.8219</span></div>
-      <div class="card">🌡 Temp <span id="temp">25°C</span></div>
-      <div class="card">💧 Humidity <span id="hum">62%</span></div>
+      <div class="card">📍 GPS <span id="gps">--</span></div>
+      <div class="card">🌡 Temp <span id="temp">--</span></div>
+      <div class="card">💧 Humidity <span id="hum">--</span></div>
     </div>
 
-    <!-- GRID -->
     <div class="grid">
 
-      <!-- CHART -->
       <div class="card big">
         <h3>Temperature & Humidity</h3>
-        <canvas id="sensorChart" height="120"></canvas>
+        <canvas id="sensorChart"></canvas>
       </div>
 
-      <!-- MAP -->
       <div class="card big">
-        <h3>GPS Route</h3>
-        <div id="map" style="height:300px;border-radius:12px;"></div>
+        <h3>Live Vehicle Route</h3>
+        <div id="map"></div>
       </div>
 
     </div>
   </main>
-
 </div>
 
 <script src="js/dashboard.js"></script>
