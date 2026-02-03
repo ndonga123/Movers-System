@@ -148,3 +148,9 @@ body.dark .card {
 body.dark canvas {
   background: #020617;
 }
+#map {
+  width: 100%;
+  height: 320px;
+  min-height: 320px;
+  border-radius: 12px;
+}
