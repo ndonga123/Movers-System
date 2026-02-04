@@ -1,47 +1,23 @@
-const API = "https://movers-system.onrender.com/api/summary";
+console.log("DASHBOARD CONNECTED");
 
-/* ---------- STATS ---------- */
-async function loadSummary() {
-  try {
-    const res = await fetch(API);
-    const data = await res.json();
+// API base
+const API = "https://movers-system.onrender.com/api";
 
-    const [lat, lng] = data.gps.split(",");
+// Elements
+const gpsEl = document.getElementById("gps");
+const tempEl = document.getElementById("temp");
+const humEl  = document.getElementById("hum");
 
-    document.getElementById("gps").innerText = data.gps;
-    document.getElementById("temp").innerText = data.temp + "°C";
-    document.getElementById("hum").innerText = data.humidity + "%";
-
-    moveVehicle(parseFloat(lat), parseFloat(lng));
-    updateChart(parseFloat(data.temp), parseFloat(data.humidity));
-  } catch (err) {
-    console.error("Dashboard error:", err);
-  }
-}
-
-setInterval(loadSummary, 3000);
-loadSummary();
-
-/* ---------- MAP ---------- */
-const map = L.map("map").setView([-1.2997, 36.8219], 13);
-
+// Leaflet map
+const map = L.map("map").setView([-1.2921, 36.8219], 13);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "© OpenStreetMap"
 }).addTo(map);
 
-let marker = L.marker([-1.2997, 36.8219]).addTo(map);
-let path = L.polyline([], { color: "blue" }).addTo(map);
+const marker = L.marker([-1.2921, 36.8219]).addTo(map);
 
-function moveVehicle(lat, lng) {
-  const pos = [lat, lng];
-  marker.setLatLng(pos);
-  path.addLatLng(pos);
-  map.panTo(pos, { animate: true, duration: 0.5 });
-}
-
-/* ---------- CHART ---------- */
-const ctx = document.getElementById("sensorChart").getContext("2d");
-
+// Chart
+const ctx = document.getElementById("sensorChart");
 let labels = [];
 let tempData = [];
 let humData = [];
@@ -51,41 +27,43 @@ const chart = new Chart(ctx, {
   data: {
     labels,
     datasets: [
-      {
-        label: "Temperature (°C)",
-        data: tempData,
-        borderWidth: 2,
-        tension: 0.4
-      },
-      {
-        label: "Humidity (%)",
-        data: humData,
-        borderWidth: 2,
-        tension: 0.4
-      }
+      { label: "Temp °C", data: tempData, borderWidth: 2, tension: 0.4 },
+      { label: "Humidity %", data: humData, borderWidth: 2, tension: 0.4 }
     ]
   },
-  options: {
-    responsive: true,
-    plugins: { legend: { position: "top" } },
-    scales: {
-      y: { beginAtZero: false }
-    }
-  }
+  options: { responsive: true }
 });
 
-function updateChart(temp, hum) {
-  const time = new Date().toLocaleTimeString().slice(0, 5);
+// Poll backend every 3 seconds
+async function fetchSummary() {
+  try {
+    const res = await fetch(`${API}/summary`);
+    const data = await res.json();
 
-  labels.push(time);
-  tempData.push(temp);
-  humData.push(hum);
+    gpsEl.innerText = data.gps;
+    tempEl.innerText = data.temp + "°C";
+    humEl.innerText  = data.humidity + "%";
 
-  if (labels.length > 10) {
-    labels.shift();
-    tempData.shift();
-    humData.shift();
+    const [lat, lng] = data.gps.split(",").map(Number);
+    marker.setLatLng([lat, lng]);
+    map.panTo([lat, lng]);
+
+    labels.push(new Date().toLocaleTimeString().slice(0,5));
+    tempData.push(data.temp);
+    humData.push(data.humidity);
+
+    if (labels.length > 8) {
+      labels.shift();
+      tempData.shift();
+      humData.shift();
+    }
+
+    chart.update();
+
+  } catch (err) {
+    console.error("API error:", err);
   }
-
-  chart.update();
 }
+
+setInterval(fetchSummary, 3000);
+fetchSummary();
