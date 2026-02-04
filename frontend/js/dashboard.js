@@ -1,9 +1,31 @@
 console.log("Dashboard loaded");
+const vehicles = [
+  { id: "TRK-01", status: "Moving", lat: -1.2997, lng: 36.8219 },
+  { id: "TRK-02", status: "Idle", lat: -1.2910, lng: 36.8350 },
+  { id: "TRK-03", status: "Moving", lat: -1.2865, lng: 36.8380 }
+];
+
+function renderVehicles() {
+  const list = document.getElementById("vehicleList");
+  list.innerHTML = "";
+
+  vehicles.forEach(v => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <strong>${v.id}</strong>
+      <span>${v.status}</span>
+    `;
+    list.appendChild(li);
+  });
+}
+
+renderVehicles();
 
 // ===== DARK MODE =====
 function toggleDark() {
   document.body.classList.toggle("dark");
 }
+
 
 // ===== LIVE SENSORS =====
 setInterval(() => {
@@ -87,3 +109,4 @@ setInterval(() => {
 
   currentPoint = [p.lat, p.lng];
 }, 1500);
+document.getElementById("year").innerText = new Date().getFullYear();

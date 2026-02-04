@@ -42,21 +42,22 @@
 
     <div class="grid">
 
-      <div class="card big">
-        <h3>Temperature & Humidity</h3>
-        <canvas id="sensorChart"></canvas>
-      </div>
+  <!-- VEHICLE LIST -->
+  <div class="card big">
+    <h3>Active Vehicles</h3>
+    <ul id="vehicleList" class="vehicle-list"></ul>
+  </div>
 
-      <div class="card big">
-  <h3>Live Vehicle Route</h3>
-  <div id="map"></div>
+  <!-- CHART -->
+  <div class="card big">
+    <h3>Temperature & Humidity</h3>
+    <canvas id="sensorChart" height="120"></canvas>
+  </div>
+
+  <!-- MAP -->
+  <div class="card big">
+    <h3>GPS Route</h3>
+    <div id="map" style="height:300px;border-radius:12px;"></div>
+  </div>
+
 </div>
-
-
-    </div>
-  </main>
-</div>
-
-<script src="js/dashboard.js"></script>
-</body>
-</html>
