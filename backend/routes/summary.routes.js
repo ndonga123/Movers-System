@@ -1,13 +1,13 @@
-const express = require("express");
-const auth = require("../auth");
-const router = express.Router();
+const router = require("express").Router();
 
-router.get("/", auth, (req,res)=>{
+router.get("/", (req, res) => {
+  const lat = (-1.29 + Math.random() * 0.01).toFixed(5);
+  const lng = (36.82 + Math.random() * 0.01).toFixed(5);
+
   res.json({
-    gps:{lat:-1.2997,lng:36.8219},
-    activeDeliveries:3,
-    temperature:25,
-    humidity:62
+    gps: `${lat}, ${lng}`,
+    temp: (24 + Math.random() * 6).toFixed(1),
+    humidity: (55 + Math.random() * 20).toFixed(1)
   });
 });
 
