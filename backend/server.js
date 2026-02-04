@@ -11,10 +11,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/auth", require("./routes/auth.routes"));
-app.use("/api/summary", require("./routes/summary.routes"));
-app.use("/api/deliveries", require("./routes/delivery.routes"));
-app.use("/api/vehicles", require("./routes/vehicle.route"));
+app.use("/api/auth", require("./routes/auth.routes.js"));
+app.use("/api/summary", require("./routes/summary.routes.js"));
+app.use("/api/deliveries", require("./routes/delivery.routes.js"));
+app.use("/api/vehicles", require("./routes/vehicle.routes.js"));
 
 const server = http.createServer(app);
 new Server(server, { cors: { origin: "*" } });
