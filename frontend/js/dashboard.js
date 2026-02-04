@@ -1,112 +1,91 @@
-console.log("Dashboard loaded");
-const vehicles = [
-  { id: "TRK-01", status: "Moving", lat: -1.2997, lng: 36.8219 },
-  { id: "TRK-02", status: "Idle", lat: -1.2910, lng: 36.8350 },
-  { id: "TRK-03", status: "Moving", lat: -1.2865, lng: 36.8380 }
-];
+const API = "https://movers-system.onrender.com/api/summary";
 
-function renderVehicles() {
-  const list = document.getElementById("vehicleList");
-  list.innerHTML = "";
+/* ---------- STATS ---------- */
+async function loadSummary() {
+  try {
+    const res = await fetch(API);
+    const data = await res.json();
 
-  vehicles.forEach(v => {
-    const li = document.createElement("li");
-    li.innerHTML = `
-      <strong>${v.id}</strong>
-      <span>${v.status}</span>
-    `;
-    list.appendChild(li);
-  });
+    const [lat, lng] = data.gps.split(",");
+
+    document.getElementById("gps").innerText = data.gps;
+    document.getElementById("temp").innerText = data.temp + "°C";
+    document.getElementById("hum").innerText = data.humidity + "%";
+
+    moveVehicle(parseFloat(lat), parseFloat(lng));
+    updateChart(parseFloat(data.temp), parseFloat(data.humidity));
+  } catch (err) {
+    console.error("Dashboard error:", err);
+  }
 }
 
-renderVehicles();
+setInterval(loadSummary, 3000);
+loadSummary();
 
-// ===== DARK MODE =====
-function toggleDark() {
-  document.body.classList.toggle("dark");
-}
-
-
-// ===== LIVE SENSORS =====
-setInterval(() => {
-  const lat = currentPoint[0].toFixed(5);
-  const lng = currentPoint[1].toFixed(5);
-
-  document.getElementById("gps").innerText = lat + ", " + lng;
-  document.getElementById("temp").innerText = (22 + Math.random() * 6).toFixed(1) + "°C";
-  document.getElementById("hum").innerText = (55 + Math.random() * 20).toFixed(1) + "%";
-}, 2000);
-
-// ===== CHART =====
-const ctx = document.getElementById("sensorChart");
-const chart = new Chart(ctx, {
-  type: "line",
-  data: {
-    labels: [],
-    datasets: [
-      { label: "Temp °C", data: [], tension: 0.4 },
-      { label: "Humidity %", data: [], tension: 0.4 }
-    ]
-  },
-  options: {
-    responsive: true,
-    scales: { y: { beginAtZero: false } }
-  }
-});
-
-setInterval(() => {
-  chart.data.labels.push(new Date().toLocaleTimeString().slice(0,5));
-  chart.data.datasets[0].data.push(22 + Math.random() * 6);
-  chart.data.datasets[1].data.push(55 + Math.random() * 20);
-
-  if (chart.data.labels.length > 8) {
-    chart.data.labels.shift();
-    chart.data.datasets[0].data.shift();
-    chart.data.datasets[1].data.shift();
-  }
-
-  chart.update();
-}, 3000);
-
-// ===== MAP + ROAD FOLLOWING =====
+/* ---------- MAP ---------- */
 const map = L.map("map").setView([-1.2997, 36.8219], 13);
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "© OpenStreetMap"
 }).addTo(map);
 
-// Start & End (Nairobi)
-const start = L.latLng(-1.2997, 36.8219);
-const end   = L.latLng(-1.2865, 36.8380);
+let marker = L.marker([-1.2997, 36.8219]).addTo(map);
+let path = L.polyline([], { color: "blue" }).addTo(map);
 
-let currentPoint = [start.lat, start.lng];
+function moveVehicle(lat, lng) {
+  const pos = [lat, lng];
+  marker.setLatLng(pos);
+  path.addLatLng(pos);
+  map.panTo(pos, { animate: true, duration: 0.5 });
+}
 
-const routeControl = L.Routing.control({
-  waypoints: [start, end],
-  lineOptions: { styles: [{ weight: 5 }] },
-  addWaypoints: false,
-  draggableWaypoints: false,
-  show: false
-}).addTo(map);
+/* ---------- CHART ---------- */
+const ctx = document.getElementById("sensorChart").getContext("2d");
 
-let routeCoords = [];
-let step = 0;
-let marker = L.marker(start).addTo(map);
+let labels = [];
+let tempData = [];
+let humData = [];
 
-routeControl.on("routesfound", e => {
-  routeCoords = e.routes[0].coordinates;
+const chart = new Chart(ctx, {
+  type: "line",
+  data: {
+    labels,
+    datasets: [
+      {
+        label: "Temperature (°C)",
+        data: tempData,
+        borderWidth: 2,
+        tension: 0.4
+      },
+      {
+        label: "Humidity (%)",
+        data: humData,
+        borderWidth: 2,
+        tension: 0.4
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: "top" } },
+    scales: {
+      y: { beginAtZero: false }
+    }
+  }
 });
 
-// Move vehicle smoothly on real road
-setInterval(() => {
-  if (routeCoords.length === 0) return;
+function updateChart(temp, hum) {
+  const time = new Date().toLocaleTimeString().slice(0, 5);
 
-  step = (step + 1) % routeCoords.length;
-  const p = routeCoords[step];
+  labels.push(time);
+  tempData.push(temp);
+  humData.push(hum);
 
-  marker.setLatLng([p.lat, p.lng]);
-  map.panTo([p.lat, p.lng], { animate: true });
+  if (labels.length > 10) {
+    labels.shift();
+    tempData.shift();
+    humData.shift();
+  }
 
-  currentPoint = [p.lat, p.lng];
-}, 1500);
-document.getElementById("year").innerText = new Date().getFullYear();
+  chart.update();
+}
