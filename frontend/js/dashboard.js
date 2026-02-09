@@ -1,4 +1,23 @@
 console.log("DASHBOARD JS LOADED");
+const API = "https://movers-system.onrender.com/api";
+async function loadVehicles() {
+  try {
+    const res = await fetch(API + "/vehicles");
+    const vehicles = await res.json();
+
+    const list = document.getElementById("vehicleList");
+    list.innerHTML = "";
+
+    vehicles.forEach(v => {
+      const li = document.createElement("li");
+      li.textContent = `${v.name} | ${v.from} → ${v.to}`;
+      list.appendChild(li);
+    });
+
+  } catch (err) {
+    console.error("FAILED TO LOAD VEHICLES:", err);
+  }
+}
 
 // ---------------- DARK MODE ----------------
 function toggleDark() {
@@ -87,6 +106,6 @@ document.addEventListener("DOMContentLoaded", () => {
   initChart();
   initMap();
   loadSummary();
+  loadVehicles();          // 👈 ADD THIS
   setInterval(loadSummary, 5000);
 });
-document.getElementById("year").textContent = new Date().getFullYear();
