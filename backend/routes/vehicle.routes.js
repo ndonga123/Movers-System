@@ -1,26 +1,19 @@
 const express = require("express");
-const auth = require("../auth");
-const Vehicle = require("../Vehicle");
-
 const router = express.Router();
 
-router.get("/", auth, async (req, res) => {
-  const vehicles = await Vehicle.find();
+// TEMP in-memory vehicle store
+let vehicles = [];
+
+// GET all vehicles
+router.get("/", (req, res) => {
   res.json(vehicles);
 });
 
-router.post("/", auth, async (req, res) => {
-  const v = await Vehicle.create(req.body);
-  res.json(v);
-});
-
-router.put("/:id/telemetry", async (req, res) => {
-  const v = await Vehicle.findByIdAndUpdate(
-    req.params.id,
-    { ...req.body, updatedAt: Date.now() },
-    { new: true }
-  );
-  res.json(v);
+// ADD a vehicle
+router.post("/", (req, res) => {
+  const vehicle = req.body;
+  vehicles.push(vehicle);
+  res.json({ message: "Vehicle added", data: vehicle });
 });
 
 module.exports = router;
