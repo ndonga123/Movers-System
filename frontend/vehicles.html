@@ -41,5 +41,47 @@
 </div>
 
 <script src="js/vehicles.js"></script>
+<script>
+const API = "https://movers-system.onrender.com/api/vehicles";
+
+document.getElementById("vehicleForm").addEventListener("submit", async e => {
+  e.preventDefault();
+
+  const data = {
+    name: document.getElementById("name").value,
+    lat: document.getElementById("lat").value,
+    lng: document.getElementById("lng").value
+  };
+
+  await fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+
+  alert("Vehicle added!");
+  e.target.reset();
+  loadVehicles();
+});
+
+async function loadVehicles() {
+  const res = await fetch(API);
+  const vehicles = await res.json();
+
+  const list = document.getElementById("vehicleList");
+  if (!list) return;
+
+  list.innerHTML = "";
+
+  vehicles.forEach(v => {
+    const li = document.createElement("li");
+    li.textContent = `${v.name} (${v.lat}, ${v.lng})`;
+    list.appendChild(li);
+  });
+}
+
+loadVehicles();
+</script>
+
 </body>
 </html>
