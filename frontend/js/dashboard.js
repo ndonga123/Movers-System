@@ -89,3 +89,4 @@ document.addEventListener("DOMContentLoaded", () => {
   loadSummary();
   setInterval(loadSummary, 5000);
 });
+document.getElementById("year").textContent = new Date().getFullYear();

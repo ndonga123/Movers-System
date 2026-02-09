@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Vehicles</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <h2>IoT Movers System</h2>
+    <a href="dashboard.html">Dashboard</a>
+    <a class="active">Vehicles</a>
+    <a href="reports.html">Reports</a>
+    <button onclick="toggleDark()">🌙</button>
+    <a href="login.html">Logout</a>
+  </aside>
+
+  <main>
+    <h1>Vehicles</h1>
+    <p>Live fleet status</p>
+
+    <div class="card big">
+      <ul id="vehicleList" class="vehicle-list"></ul>
+    </div>
+    <div class="card big">
+  <h3>Add Vehicle</h3>
+
+  <form id="addVehicleForm" class="vehicle-form">
+    <input type="text" id="name" placeholder="Vehicle Name" required />
+    <input type="text" id="lat" placeholder="Start Latitude" required />
+    <input type="text" id="lng" placeholder="Start Longitude" required />
+    <button type="submit">Add Vehicle</button>
+  </form>
+</div>
+
+  </main>
+
+</div>
+
+<script src="js/vehicles.js"></script>
+</body>
+</html>

@@ -1,16 +1,39 @@
-const mongoose = require("mongoose");
+const API = "https://movers-system.onrender.com/api/vehicles";
 
-const VehicleSchema = new mongoose.Schema({
-  plate: { type: String, required: true, unique: true },
-  driver: String,
-  status: { type: String, default: "Idle" },
-  gps: {
-    lat: Number,
-    lng: Number
-  },
-  temperature: Number,
-  humidity: Number,
-  updatedAt: { type: Date, default: Date.now }
+const list = document.getElementById("vehicleList");
+const form = document.getElementById("addVehicleForm");
+
+function loadVehicles() {
+  fetch(API)
+    .then(res => res.json())
+    .then(data => {
+      list.innerHTML = "";
+      data.forEach(v => {
+        const li = document.createElement("li");
+        li.textContent = `${v.name} (${v.lat}, ${v.lng})`;
+        list.appendChild(li);
+      });
+    });
+}
+
+form.addEventListener("submit", e => {
+  e.preventDefault();
+
+  const vehicle = {
+    name: document.getElementById("name").value,
+    lat: document.getElementById("lat").value,
+    lng: document.getElementById("lng").value
+  };
+
+  fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(vehicle)
+  })
+  .then(() => {
+    form.reset();
+    loadVehicles();
+  });
 });
 
-module.exports = mongoose.model("Vehicles", VehicleSchema);
+loadVehicles();
