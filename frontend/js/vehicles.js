@@ -20,8 +20,8 @@ form.addEventListener("submit", e => {
   e.preventDefault();
 
   const name = document.getElementById("name").value;
-  const latitude = document.getElementById("lat").value;
-  const longitude = document.getElementById("lng").value;
+  const lat = Number(document.getElementById("lat").value);
+  const lng = Number(document.getElementById("lng").value);
   const from = document.getElementById("from").value;
   const to = document.getElementById("to").value;
 
@@ -35,8 +35,8 @@ form.addEventListener("submit", e => {
 
   const vehicle = {
     name,
-    latitude: Number(latitude),
-    longitude: Number(longitude),
+    lat,
+    lng,
     from,
     to,
     route
