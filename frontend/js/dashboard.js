@@ -29,31 +29,48 @@ async function loadSummary() {
 
 // ---------------- VEHICLES ----------------
 async function loadVehicleList() {
-  const res = await fetch(`${API}/vehicles`);
+  const res = await fetch("https://movers-system.onrender.com/api/vehicles");
   const vehicles = await res.json();
 
   const list = document.getElementById("vehicleList");
   list.innerHTML = "";
 
   vehicles.forEach(v => {
-    const li = document.createElement("li");
-    li.textContent = `${v.name} | ${v.from} → ${v.to}`;
+    const card = document.createElement("div");
+    card.className = "vehicle-card";
 
-    li.onclick = () => {
-      if (!v.route || v.route.length === 0) return;
+    card.innerHTML = `
+      <div class="vehicle-name">${v.name}</div>
+      <div class="vehicle-route">${v.from} → ${v.to}</div>
+    `;
 
-      if (routeLine) map.removeLayer(routeLine);
+    card.onclick = () => {
+      card.onclick = () => {
+  if (!v.route || !v.route.length) return;
 
-      currentRoute = v.route.map(p => [p.lat, p.lng]);
-      routeIndex = 0;
+  if (routeLine) map.removeLayer(routeLine);
 
-      routeLine = L.polyline(currentRoute, { color: "blue" }).addTo(map);
-      map.fitBounds(routeLine.getBounds());
+  const coords = v.route.map(p => [p.lat, p.lng]);
+
+  routeLine = L.polyline(coords, { color: "#00e5ff", weight: 4 }).addTo(map);
+  map.fitBounds(routeLine.getBounds());
+
+  currentRoute = coords;
+  routeIndex = 0;
+
+  // move marker to start
+  marker.setLatLng(coords[0]);
+
+  document.getElementById("routeLabel").textContent =
+    `${v.name}: ${v.from} → ${v.to}`;
+};
+
     };
 
-    list.appendChild(li);
+    list.appendChild(card);
   });
 }
+
 
 // ---------------- CHART ----------------
 let sensorChart;
