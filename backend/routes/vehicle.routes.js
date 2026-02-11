@@ -23,3 +23,22 @@ router.post("/", async (req, res) => {
 });
 
 module.exports = router;
+// UPDATE vehicle
+router.put("/:id", async (req, res) => {
+  try {
+    const v = await Vehicle.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(v);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// DELETE vehicle
+router.delete("/:id", async (req, res) => {
+  try {
+    await Vehicle.findByIdAndDelete(req.params.id);
+    res.json({ msg: "Vehicle deleted" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});

@@ -40,10 +40,16 @@ async function loadVehicleList() {
     card.className = "vehicle-card";
 
     card.innerHTML = `
-      <div class="vehicle-name">${v.name}</div>
-      <div class="vehicle-route">${v.from} → ${v.to}</div>
-    `;
-
+  <div class="vehicle-name">${v.name}</div>
+  <div class="vehicle-route">${v.from} → ${v.to}</div>
+  <div class="vehicle-meta">
+    <span>📏 ${distance.toFixed(1)} km</span>
+    <span class="speed">🚗 0 km/h</span>
+  </div>
+  <div class="vehicle-actions">
+    <button onclick="deleteVehicle('${v._id}')">🗑</button>
+  </div>
+`;
     card.onclick = () => {
       card.onclick = () => {
   if (!v.route || !v.route.length) return;
@@ -122,15 +128,29 @@ function initMap() {
 
 // move along selected route
 function moveVehicle() {
+  let progress = 0;
+
+function moveVehicle() {
   if (!currentRoute.length) return;
 
-  if (routeIndex >= currentRoute.length) routeIndex = 0;
+  const steps = 600; // 10 min demo
+  progress++;
 
-  const [lat, lng] = currentRoute[routeIndex];
+  const t = progress / steps;
+  if (t >= 1) progress = 0;
+
+  const i = Math.floor(t * (currentRoute.length - 1));
+  const p1 = currentRoute[i];
+  const p2 = currentRoute[i + 1];
+
+  const frac = (t * currentRoute.length) % 1;
+
+  const lat = p1[0] + (p2[0] - p1[0]) * frac;
+  const lng = p1[1] + (p2[1] - p1[1]) * frac;
+
   marker.setLatLng([lat, lng]);
-  map.setView([lat, lng], 10);
+}
 
-  routeIndex++;
 }
 
 // ---------------- INIT ----------------
@@ -139,7 +159,11 @@ document.addEventListener("DOMContentLoaded", () => {
   initMap();
   loadSummary();
   loadVehicleList();
-
+function deleteVehicle(id) {
+  fetch(`${API}/vehicles/${id}`, { method: "DELETE" })
+    .then(() => loadVehicleList());
+}
   setInterval(loadSummary, 5000);
-  setInterval(moveVehicle, 3000);
+  setInterval(moveVehicle, 1000);
+
 });
