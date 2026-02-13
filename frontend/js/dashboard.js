@@ -6,6 +6,19 @@ let map, marker, routeLine;
 let currentRoute = [];
 let routeIndex = 0;
 let progress = 0;
+const notifyBtn = document.getElementById("notifyBtn");
+const panel = document.getElementById("notifications");
+
+notifyBtn.onclick = () => {
+  panel.style.display =
+    panel.style.display === "block" ? "none" : "block";
+};
+
+function pushNotification(msg) {
+  const p = document.createElement("p");
+  p.textContent = msg;
+  panel.prepend(p);
+}
 
 // ---------------- DARK MODE ----------------
 function toggleDark() {
@@ -26,6 +39,9 @@ async function loadSummary() {
   } catch (err) {
     console.error("FAILED TO LOAD SUMMARY:", err);
   }
+  if (data.temp > 30) pushNotification("🔥 High temperature!");
+if (data.humidity > 80) pushNotification("💧 High humidity!");
+
 }
 
 // ---------------- VEHICLES ----------------

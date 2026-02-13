@@ -35,3 +35,19 @@ router.get("/", (req, res) => {
 });
 
 module.exports = router;
+const sendAlert = require("../utils/mailer");
+if (data.temp > 30) {
+  await sendAlert(
+    "manager@email.com",
+    "🔥 Temperature Alert",
+    `Vehicle temperature is ${data.temp}°C`
+  );
+}
+
+if (data.humidity > 80) {
+  await sendAlert(
+    "manager@email.com",
+    "💧 Humidity Alert",
+    `Humidity is ${data.humidity}%`
+  );
+}
