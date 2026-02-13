@@ -5,6 +5,7 @@ const API = "https://movers-system.onrender.com/api";
 let map, marker, routeLine;
 let currentRoute = [];
 let routeIndex = 0;
+let progress = 0;
 
 // ---------------- DARK MODE ----------------
 function toggleDark() {
@@ -29,54 +30,56 @@ async function loadSummary() {
 
 // ---------------- VEHICLES ----------------
 async function loadVehicleList() {
-  const res = await fetch("https://movers-system.onrender.com/api/vehicles");
-  const vehicles = await res.json();
+  try {
+    const res = await fetch(`${API}/vehicles`);
+    const vehicles = await res.json();
 
-  const list = document.getElementById("vehicleList");
-  list.innerHTML = "";
+    const list = document.getElementById("vehicleList");
+    list.innerHTML = "";
 
-  vehicles.forEach(v => {
-    const card = document.createElement("div");
-    card.className = "vehicle-card";
+    vehicles.forEach(v => {
+      const card = document.createElement("div");
+      card.className = "vehicle-card";
 
-    card.innerHTML = `
-  <div class="vehicle-name">${v.name}</div>
-  <div class="vehicle-route">${v.from} → ${v.to}</div>
-  <div class="vehicle-meta">
-    <span>📏 ${distance.toFixed(1)} km</span>
-    <span class="speed">🚗 0 km/h</span>
-  </div>
-  <div class="vehicle-actions">
-    <button onclick="deleteVehicle('${v._id}')">🗑</button>
-  </div>
-`;
-    card.onclick = () => {
-      card.onclick = () => {
-  if (!v.route || !v.route.length) return;
+      card.innerHTML = `
+        <div class="vehicle-name">${v.name}</div>
+        <div class="vehicle-route">${v.from} → ${v.to}</div>
+        <div class="vehicle-actions">
+          <button onclick="deleteVehicle('${v._id}')">🗑</button>
+        </div>
+      `;
 
-  if (routeLine) map.removeLayer(routeLine);
+      card.addEventListener("click", () => {
+        if (!v.route || !v.route.length) return;
 
-  const coords = v.route.map(p => [p.lat, p.lng]);
+        if (routeLine) map.removeLayer(routeLine);
 
-  routeLine = L.polyline(coords, { color: "#00e5ff", weight: 4 }).addTo(map);
-  map.fitBounds(routeLine.getBounds());
+        const coords = v.route.map(p => [p.lat, p.lng]);
+        routeLine = L.polyline(coords, { color: "#00e5ff", weight: 4 }).addTo(map);
+        map.fitBounds(routeLine.getBounds());
 
-  currentRoute = coords;
-  routeIndex = 0;
+        currentRoute = coords;
+        routeIndex = 0;
+        progress = 0;
 
-  // move marker to start
-  marker.setLatLng(coords[0]);
+        marker.setLatLng(coords[0]);
 
-  document.getElementById("routeLabel").textContent =
-    `${v.name}: ${v.from} → ${v.to}`;
-};
+        document.getElementById("routeLabel").textContent =
+          `${v.name}: ${v.from} → ${v.to}`;
+      });
 
-    };
-
-    list.appendChild(card);
-  });
+      list.appendChild(card);
+    });
+  } catch (err) {
+    console.error("FAILED TO LOAD VEHICLES:", err);
+  }
 }
 
+// ---------------- DELETE ----------------
+function deleteVehicle(id) {
+  fetch(`${API}/vehicles/${id}`, { method: "DELETE" })
+    .then(() => loadVehicleList());
+}
 
 // ---------------- CHART ----------------
 let sensorChart;
@@ -126,14 +129,11 @@ function initMap() {
   marker = L.marker([-1.2921, 36.8219]).addTo(map);
 }
 
-// move along selected route
-function moveVehicle() {
-  let progress = 0;
-
+// ---------------- REALISTIC MOVE ----------------
 function moveVehicle() {
   if (!currentRoute.length) return;
 
-  const steps = 600; // 10 min demo
+  const steps = 600; // ~10 minutes demo
   progress++;
 
   const t = progress / steps;
@@ -151,19 +151,13 @@ function moveVehicle() {
   marker.setLatLng([lat, lng]);
 }
 
-}
-
 // ---------------- INIT ----------------
 document.addEventListener("DOMContentLoaded", () => {
   initChart();
   initMap();
   loadSummary();
   loadVehicleList();
-function deleteVehicle(id) {
-  fetch(`${API}/vehicles/${id}`, { method: "DELETE" })
-    .then(() => loadVehicleList());
-}
+
   setInterval(loadSummary, 5000);
   setInterval(moveVehicle, 1000);
-
 });
