@@ -42,3 +42,7 @@ router.delete("/:id", async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+router.delete("/:id", async (req, res) => {
+  await Vehicle.findByIdAndDelete(req.params.id);
+  res.json({ msg: "Deleted" });
+});

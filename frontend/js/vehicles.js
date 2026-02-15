@@ -25,13 +25,17 @@ form.addEventListener("submit", e => {
   const from = document.getElementById("from").value;
   const to = document.getElementById("to").value;
 
-  const route = [
-    { lat: -1.2921, lng: 36.8219 }, // Nairobi
-    { lat: -1.1500, lng: 36.8000 },
-    { lat: -0.9500, lng: 36.8500 },
-    { lat: -0.7000, lng: 36.7000 },
-    { lat: -0.3031, lng: 36.0800 }  // Nakuru
-  ];
+
+    let route = [];
+
+if (from.toLowerCase() === "nairobi" && to.toLowerCase() === "nakuru") {
+  route = [ /* nakuru coords */ ];
+}
+else if (from.toLowerCase() === "nairobi" && to.toLowerCase() === "mombasa") {
+  route = [ /* mombasa coords */ ];
+}
+
+
 
   const vehicle = {
     name,

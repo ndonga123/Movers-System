@@ -147,24 +147,31 @@ function initMap() {
 
 // ---------------- REALISTIC MOVE ----------------
 function moveVehicle() {
+  let t = 0;
+
+function moveVehicle() {
   if (!currentRoute.length) return;
 
-  const steps = 600; // ~10 minutes demo
-  progress++;
+  const total = currentRoute.length - 1;
+  const i = Math.floor(t);
+  const frac = t - i;
 
-  const t = progress / steps;
-  if (t >= 1) progress = 0;
+  if (i >= total) {
+    t = 0;
+    return;
+  }
 
-  const i = Math.floor(t * (currentRoute.length - 1));
-  const p1 = currentRoute[i];
-  const p2 = currentRoute[i + 1];
+  const [lat1, lng1] = currentRoute[i];
+  const [lat2, lng2] = currentRoute[i + 1];
 
-  const frac = (t * currentRoute.length) % 1;
-
-  const lat = p1[0] + (p2[0] - p1[0]) * frac;
-  const lng = p1[1] + (p2[1] - p1[1]) * frac;
+  const lat = lat1 + (lat2 - lat1) * frac;
+  const lng = lng1 + (lng2 - lng1) * frac;
 
   marker.setLatLng([lat, lng]);
+
+  t += 0.01; // smaller = smoother, slower
+}
+
 }
 
 // ---------------- INIT ----------------
