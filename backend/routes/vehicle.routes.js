@@ -12,33 +12,49 @@ router.get("/", async (req, res) => {
 });
 
 // ADD vehicle
+const express = require("express");
+const router = express.Router();
+const Vehicle = require("../models/Vehicle");
+const getRoute = require("../utils/route.service");
+
+router.get("/", async (req, res) => {
+  const vehicles = await Vehicle.find();
+  res.json(vehicles);
+});
+
 router.post("/", async (req, res) => {
   try {
-    const getRoute = require("../utils/route.service");
+    const { name, latitude, longitude, from, to } = req.body;
 
-router.post("/", async (req, res) => {
-  const { name, latitude, longitude, from, to } = req.body;
+    const route = await getRoute(
+      { lat: latitude, lng: longitude },
+      { lat: -0.3031, lng: 36.0800 } // Nakuru
+    );
 
-  const route = await getRoute(
-    { lat: latitude, lng: longitude },
-    { lat: -0.3031, lng: 36.0800 } // Nakuru for demo
-  );
+    const v = new Vehicle({
+      name,
+      from,
+      to,
+      latitude,
+      longitude,
+      route: route.map(p => ({ lat: p[1], lng: p[0] }))
+    });
 
-  const v = new Vehicle({
-    name,
-    from,
-    to,
-    latitude,
-    longitude,
-    route: route.map(p => ({ lat: p[1], lng: p[0] }))
-  });
+    await v.save();
+    res.json(v);
 
-  await v.save();
-  res.json(v);
-});
-
+  } catch (err) {
+    console.error("Vehicle route error:", err);
+    res.status(500).json({ error: "Route generation failed" });
   }
 });
+
+router.delete("/:id", async (req, res) => {
+  await Vehicle.findByIdAndDelete(req.params.id);
+  res.json({ ok: true });
+});
+
+module.exports = router;
 
 module.exports = router;
 // UPDATE vehicle
