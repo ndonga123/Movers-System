@@ -1,5 +1,7 @@
-const router = require("express").Router();
+const express = require("express");
+const router = express.Router();
 const Vehicle = require("../models/Vehicle");
+const getRoute = require("../utils/route.service");
 
 // GET all vehicles
 router.get("/", async (req, res) => {
@@ -11,24 +13,14 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ADD vehicle
-const express = require("express");
-const router = express.Router();
-const Vehicle = require("../models/Vehicle");
-const getRoute = require("../utils/route.service");
-
-router.get("/", async (req, res) => {
-  const vehicles = await Vehicle.find();
-  res.json(vehicles);
-});
-
+// ADD vehicle (with real road route)
 router.post("/", async (req, res) => {
   try {
     const { name, latitude, longitude, from, to } = req.body;
 
     const route = await getRoute(
       { lat: latitude, lng: longitude },
-      { lat: -0.3031, lng: 36.0800 } // Nakuru
+      { lat: -0.3031, lng: 36.0800 } // Nakuru demo
     );
 
     const v = new Vehicle({
@@ -49,14 +41,6 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
-  await Vehicle.findByIdAndDelete(req.params.id);
-  res.json({ ok: true });
-});
-
-module.exports = router;
-
-module.exports = router;
 // UPDATE vehicle
 router.put("/:id", async (req, res) => {
   try {
@@ -69,11 +53,12 @@ router.put("/:id", async (req, res) => {
 
 // DELETE vehicle
 router.delete("/:id", async (req, res) => {
-  await Vehicle.findByIdAndDelete(req.params.id);
-  res.json({ msg: "deleted" });
+  try {
+    await Vehicle.findByIdAndDelete(req.params.id);
+    res.json({ msg: "deleted" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
-router.put("/:id", async (req, res) => {
-  const v = await Vehicle.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  res.json(v);
-});
+module.exports = router;
