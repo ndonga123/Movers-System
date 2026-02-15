@@ -35,14 +35,11 @@ router.put("/:id", async (req, res) => {
 
 // DELETE vehicle
 router.delete("/:id", async (req, res) => {
-  try {
-    await Vehicle.findByIdAndDelete(req.params.id);
-    res.json({ msg: "Vehicle deleted" });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-router.delete("/:id", async (req, res) => {
   await Vehicle.findByIdAndDelete(req.params.id);
-  res.json({ msg: "Deleted" });
+  res.json({ msg: "deleted" });
+});
+
+router.put("/:id", async (req, res) => {
+  const v = await Vehicle.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  res.json(v);
 });

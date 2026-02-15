@@ -1,7 +1,26 @@
+const ORS_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjFhOTE4MTIwYTA5MTRhMTE4MDkxMTQyYzQzM2VmYjhjIiwiaCI6Im11cm11cjY0In0=";
+
 const API = "https://movers-system.onrender.com/api/vehicles";
 
 const list = document.getElementById("vehicleList");
+
 const form = document.getElementById("addVehicleForm");
+async function getRealRoute(startLat, startLng, endLat, endLng) {
+  const url = `https://api.openrouteservice.org/v2/directions/driving-car?start=${startLng},${startLat}&end=${endLng},${endLat}`;
+
+  const res = await fetch(url, {
+    headers: {
+      "Authorization": ORS_KEY
+    }
+  });
+
+  const data = await res.json();
+  return data.features[0].geometry.coordinates.map(p => ({
+    lat: p[1],
+    lng: p[0]
+  }));
+}
+
 
 function loadVehicles() {
   fetch(API)
@@ -16,44 +35,24 @@ function loadVehicles() {
     });
 }
 
-form.addEventListener("submit", e => {
+form.addEventListener("submit", async e => {
   e.preventDefault();
 
-  const name = document.getElementById("name").value;
-  const lat = Number(document.getElementById("lat").value);
-  const lng = Number(document.getElementById("lng").value);
-  const from = document.getElementById("from").value;
-  const to = document.getElementById("to").value;
+  const name = nameInput.value;
+  const startLat = Number(latInput.value);
+  const startLng = Number(lngInput.value);
 
+  // Nairobi → Nakuru for now
+  const destLat = -0.3031;
+  const destLng = 36.0800;
 
-    let route = [];
+  const route = await getRealRoute(startLat, startLng, destLat, destLng);
 
-if (from.toLowerCase() === "nairobi" && to.toLowerCase() === "nakuru") {
-  route = [ /* nakuru coords */ ];
-}
-else if (from.toLowerCase() === "nairobi" && to.toLowerCase() === "mombasa") {
-  route = [ /* mombasa coords */ ];
-}
-
-
-
-  const vehicle = {
-    name,
-    lat,
-    lng,
-    from,
-    to,
-    route
-  };
-
-  fetch(API, {
+  await fetch(API, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(vehicle)
-  }).then(() => {
-    form.reset();
-    loadVehicles();
+    body: JSON.stringify({ name, startLat, startLng, route })
   });
-});
 
-loadVehicles();
+  loadVehicles();
+});

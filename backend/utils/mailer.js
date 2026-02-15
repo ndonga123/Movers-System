@@ -8,13 +8,11 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-async function sendAlert(to, subject, message) {
+module.exports = async (to, subject, text) => {
   await transporter.sendMail({
-    from: `"IoT Movers" <${process.env.ALERT_EMAIL}>`,
+    from: process.env.ALERT_EMAIL,
     to,
     subject,
-    html: `<h3>${subject}</h3><p>${message}</p>`
+    text
   });
-}
-
-module.exports = sendAlert;
+};
