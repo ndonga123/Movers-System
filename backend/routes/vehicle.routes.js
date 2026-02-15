@@ -14,11 +14,29 @@ router.get("/", async (req, res) => {
 // ADD vehicle
 router.post("/", async (req, res) => {
   try {
-    const v = new Vehicle(req.body);
-    await v.save();
-    res.json({ msg: "Vehicle added", vehicle: v });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
+    const getRoute = require("../utils/route.service");
+
+router.post("/", async (req, res) => {
+  const { name, latitude, longitude, from, to } = req.body;
+
+  const route = await getRoute(
+    { lat: latitude, lng: longitude },
+    { lat: -0.3031, lng: 36.0800 } // Nakuru for demo
+  );
+
+  const v = new Vehicle({
+    name,
+    from,
+    to,
+    latitude,
+    longitude,
+    route: route.map(p => ({ lat: p[1], lng: p[0] }))
+  });
+
+  await v.save();
+  res.json(v);
+});
+
   }
 });
 

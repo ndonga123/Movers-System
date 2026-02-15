@@ -30,17 +30,16 @@ router.get("/", async (req, res) => {
     humidity: humidity.toFixed(1),
   };
 
-  if (data.temp > 30) {
-    await sendAlert(
-      "manager@email.com",
-      "🔥 Temperature Alert",
-      `Vehicle temperature is ${data.temp}°C`
-    );
-  }
+  const sendAlert = require("../utils/mailer");
+
+if (temp > 30) {
+  await sendAlert("your@email.com", "🔥 Temp Alert", `Temp: ${temp}`);
+}
+
 
   if (data.humidity > 80) {
     await sendAlert(
-      "manager@email.com",
+      "your@email.com",
       "💧 Humidity Alert",
       `Humidity is ${data.humidity}%`
     );
