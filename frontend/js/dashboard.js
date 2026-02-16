@@ -4,12 +4,12 @@ const API = "https://movers-system.onrender.com/api";
 
 let map, marker, routeLine;
 let currentRoute = [];
-let routeIndex = 0;
 let progress = 0;
 
 // ---------------- NOTIFICATIONS ----------------
 const notifyBtn = document.getElementById("notifyBtn");
 const panel = document.getElementById("notifications");
+let lastAlert = "";
 
 if (notifyBtn) {
   notifyBtn.onclick = () => {
@@ -19,8 +19,15 @@ if (notifyBtn) {
 }
 
 function pushNotification(msg) {
+  if (!panel) return;
+  if (msg === lastAlert) return;
+
+  lastAlert = msg;
+  panel.style.display = "block";
+
   const p = document.createElement("p");
   p.textContent = msg;
+  p.className = "alert-msg";
   panel.prepend(p);
 }
 
@@ -41,7 +48,6 @@ async function loadSummary() {
 
     updateChart(data.temp, data.humidity);
 
-    // alerts
     if (data.temp > 30) pushNotification("🔥 High temperature!");
     if (data.humidity > 80) pushNotification("💧 High humidity!");
 
@@ -71,13 +77,13 @@ async function loadVehicleList() {
         </div>
       `;
 
-      // click to show route
       card.addEventListener("click", () => {
-        if (!v.route || !v.route.length) return;
+        if (!v.route || v.route.length < 3) return;
 
         if (routeLine) map.removeLayer(routeLine);
 
         const coords = v.route.map(p => [p.lat, p.lng]);
+
         routeLine = L.polyline(coords, {
           color: "#00e5ff",
           weight: 4
@@ -86,12 +92,10 @@ async function loadVehicleList() {
         map.fitBounds(routeLine.getBounds());
 
         currentRoute = coords;
-        routeIndex = 0;
         progress = 0;
         marker.setLatLng(coords[0]);
       });
 
-      // delete
       card.querySelector(".delete-btn").addEventListener("click", e => {
         e.stopPropagation();
         deleteVehicle(v._id);
@@ -163,7 +167,7 @@ function initMap() {
 function moveVehicle() {
   if (!currentRoute.length) return;
 
-  const steps = 900; // 15 min demo
+  const steps = 900;
   progress++;
 
   let t = progress / steps;
