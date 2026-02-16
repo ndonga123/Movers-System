@@ -6,13 +6,17 @@ let map, marker, routeLine;
 let currentRoute = [];
 let routeIndex = 0;
 let progress = 0;
+
+// ---------------- NOTIFICATIONS ----------------
 const notifyBtn = document.getElementById("notifyBtn");
 const panel = document.getElementById("notifications");
 
-notifyBtn.onclick = () => {
-  panel.style.display =
-    panel.style.display === "block" ? "none" : "block";
-};
+if (notifyBtn) {
+  notifyBtn.onclick = () => {
+    panel.style.display =
+      panel.style.display === "block" ? "none" : "block";
+  };
+}
 
 function pushNotification(msg) {
   const p = document.createElement("p");
@@ -36,12 +40,14 @@ async function loadSummary() {
     document.getElementById("hum").textContent = data.humidity + " %";
 
     updateChart(data.temp, data.humidity);
+
+    // alerts
+    if (data.temp > 30) pushNotification("🔥 High temperature!");
+    if (data.humidity > 80) pushNotification("💧 High humidity!");
+
   } catch (err) {
     console.error("FAILED TO LOAD SUMMARY:", err);
   }
-  if (data.temp > 30) pushNotification("🔥 High temperature!");
-if (data.humidity > 80) pushNotification("💧 High humidity!");
-
 }
 
 // ---------------- VEHICLES ----------------
@@ -61,31 +67,39 @@ async function loadVehicleList() {
         <div class="vehicle-name">${v.name}</div>
         <div class="vehicle-route">${v.from} → ${v.to}</div>
         <div class="vehicle-actions">
-          <button onclick="deleteVehicle('${v._id}')">🗑</button>
+          <button class="delete-btn">🗑</button>
         </div>
       `;
 
+      // click to show route
       card.addEventListener("click", () => {
         if (!v.route || !v.route.length) return;
 
         if (routeLine) map.removeLayer(routeLine);
 
         const coords = v.route.map(p => [p.lat, p.lng]);
-        routeLine = L.polyline(coords, { color: "#00e5ff", weight: 4 }).addTo(map);
+        routeLine = L.polyline(coords, {
+          color: "#00e5ff",
+          weight: 4
+        }).addTo(map);
+
         map.fitBounds(routeLine.getBounds());
 
         currentRoute = coords;
         routeIndex = 0;
         progress = 0;
-
         marker.setLatLng(coords[0]);
+      });
 
-        document.getElementById("routeLabel").textContent =
-          `${v.name}: ${v.from} → ${v.to}`;
+      // delete
+      card.querySelector(".delete-btn").addEventListener("click", e => {
+        e.stopPropagation();
+        deleteVehicle(v._id);
       });
 
       list.appendChild(card);
     });
+
   } catch (err) {
     console.error("FAILED TO LOAD VEHICLES:", err);
   }
@@ -145,22 +159,22 @@ function initMap() {
   marker = L.marker([-1.2921, 36.8219]).addTo(map);
 }
 
-// ---------------- REALISTIC MOVE ----------------
-function moveVehicle() {
-  let t = 0;
-
+// ---------------- SMOOTH MOVEMENT ----------------
 function moveVehicle() {
   if (!currentRoute.length) return;
 
-  const steps = 900; // 15 minutes demo
+  const steps = 900; // 15 min demo
   progress++;
 
-  const t = progress / steps;
-  if (t >= 1) progress = 0;
+  let t = progress / steps;
+  if (t >= 1) {
+    progress = 0;
+    t = 0;
+  }
 
   const i = Math.floor(t * (currentRoute.length - 1));
   const p1 = currentRoute[i];
-  const p2 = currentRoute[i + 1];
+  const p2 = currentRoute[i + 1] || p1;
 
   const frac = (t * currentRoute.length) % 1;
 
@@ -169,10 +183,6 @@ function moveVehicle() {
 
   marker.setLatLng([lat, lng]);
 }
-
-}
-
-
 
 // ---------------- INIT ----------------
 document.addEventListener("DOMContentLoaded", () => {

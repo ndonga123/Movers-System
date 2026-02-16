@@ -1,33 +1,56 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Reports</title>
-  <link rel="stylesheet" href="css/styles.css">
+<meta charset="UTF-8">
+<title>Reports</title>
+<link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body>
-  <div class="layout">
-    <aside class="sidebar">
-      <h2>IoT Movers System</h2>
-      <a href="dashboard.html">Dashboard</a>
-      <a href="vehicles.html">Vehicles</a>
-      <a class="active">Reports</a>
-      <a href="login.html">Logout</a>
-    </aside>
+<div class="layout">
 
-    <main>
-      <h1>Reports</h1>
-      <p>Analytics & history reports will show here.</p>
+<aside class="sidebar">
+  <h2>IoT Movers</h2>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="vehicles.html">Vehicles</a>
+  <a href="drivers.html">Drivers</a>
+  <a href="sensors.html">Sensors</a>
+  <a class="active">Reports</a>
+</aside>
 
-      <div class="card big">
-        <p>No reports yet.</p>
-      </div>
-    </main>
-  </div>
+<main>
+<h1>Incident Reports</h1>
 
-  <footer class="footer">
-  © 2026 IoT Movers System | Real-time Fleet Tracking
-</footer>
+<div class="card big">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Vehicle</th>
+        <th>Issue</th>
+        <th>Status</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody id="reportList"></tbody>
+  </table>
+</div>
 
+<div class="card big">
+  <h3>Create Report</h3>
+  <form id="reportForm">
+    <input id="rvehicle" placeholder="Vehicle ID" required>
+    <input id="rissue" placeholder="Issue Description" required>
+    <select id="rstatus">
+      <option>Open</option>
+      <option>Resolved</option>
+    </select>
+    <button>Submit</button>
+  </form>
+</div>
 
+</main>
+</div>
+
+<script src="js/reports.js"></script>
 </body>
 </html>

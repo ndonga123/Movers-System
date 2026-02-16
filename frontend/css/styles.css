@@ -233,15 +233,17 @@ body.dark .vehicle-list li {
   width:250px;
   border-radius:8px;
 }
-#alertsPanel {
-  position: fixed;
-  top: 60px;
-  right: 20px;
-  width: 280px;
+.alert-box {
   background: #111;
   color: #fff;
-  border-radius: 10px;
   padding: 10px;
+  border-radius: 8px;
+  margin-top: 15px;
   display: none;
 }
+
+.alert-box.show {
+  display: block;
+}
+
 

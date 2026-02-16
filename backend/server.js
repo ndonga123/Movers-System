@@ -25,7 +25,11 @@ app.use("/api/auth", require("./routes/auth.routes.js"));
 app.use("/api/summary", require("./routes/summary.routes.js"));
 app.use("/api/deliveries", require("./routes/delivery.routes.js"));
 app.use("/api/vehicles", require("./routes/vehicle.routes.js"));
-app.use("/api/reports", require("./routes/report.routes"));
+app.use("/api/reports", require("./routes/report.routes.js"));
+app.use("/api/drivers", require("./routes/drivers.routes.js"));
+app.use("/api/sensors", require("./routes/sensor.routes.js"));
+
+
 
 // 🔹 Socket server
 const server = http.createServer(app);

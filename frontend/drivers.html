@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Drivers</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <h2>IoT Movers</h2>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="vehicles.html">Vehicles</a>
+  <a class="active">Drivers</a>
+  <a href="sensors.html">Sensors</a>
+  <a href="reports.html">Reports</a>
+  <button onclick="toggleDark()">🌙</button>
+</aside>
+
+<main>
+  <h1>Drivers</h1>
+
+  <div class="card big">
+    <h3>Registered Drivers</h3>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Assigned Vehicle</th>
+        </tr>
+      </thead>
+      <tbody id="driverList"></tbody>
+    </table>
+  </div>
+
+  <div class="card big">
+    <h3>Add Driver</h3>
+    <form id="driverForm">
+      <input id="dname" placeholder="Driver Name" required>
+      <input id="dphone" placeholder="Phone Number" required>
+      <input id="dvehicle" placeholder="Vehicle ID">
+      <button>Add Driver</button>
+    </form>
+  </div>
+
+</main>
+</div>
+
+<script src="js/drivers.js"></script>
+</body>
+</html>

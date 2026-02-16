@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Sensors</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <h2>IoT Movers</h2>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="vehicles.html">Vehicles</a>
+  <a href="drivers.html">Drivers</a>
+  <a class="active">Sensors</a>
+  <a href="reports.html">Reports</a>
+</aside>
+
+<main>
+<h1>Sensor Data</h1>
+
+<div class="card big">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Vehicle</th>
+        <th>Temp (°C)</th>
+        <th>Humidity (%)</th>
+        <th>GPS</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody id="sensorTable"></tbody>
+  </table>
+</div>
+
+</main>
+</div>
+
+<script src="js/sensors.js"></script>
+</body>
+</html>
