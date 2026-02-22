@@ -3,9 +3,12 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Vehicles — IoT Movers</title>
+  <title>Dashboard — IoT Movers</title>
   <link rel="stylesheet" href="css/styles.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -28,19 +31,13 @@
 
     <nav class="sidebar-nav">
       <span class="nav-section">Monitor</span>
-      <a class="nav-item" href="dashboard.html">
-        <span class="nav-ico">⬡</span> Dashboard
-      </a>
-      <a class="nav-item active" href="vehicles.html">
-        <span class="nav-ico">🚛</span> Vehicles
-      </a>
+      <a class="nav-item active" href="dashboard.html"><span class="nav-ico">⬡</span> Dashboard</a>
+      <a class="nav-item" href="vehicles.html"><span class="nav-ico">🚛</span> Vehicles</a>
+      <a class="nav-item" href="drivers.html"><span class="nav-ico">👤</span> Drivers</a>
+      <a class="nav-item" href="sensors.html"><span class="nav-ico">📡</span> Sensors</a>
       <span class="nav-section">Insights</span>
-      <a class="nav-item" href="reports.html">
-        <span class="nav-ico">📊</span> Reports
-      </a>
-      <a class="nav-item" href="dashboard.html">
-        <span class="nav-ico">🔔</span> Alerts
-      </a>
+      <a class="nav-item" href="reports.html"><span class="nav-ico">📊</span> Reports</a>
+      <a class="nav-item" href="#" id="notifyBtn"><span class="nav-ico">🔔</span> Alerts</a>
     </nav>
 
     <div class="sidebar-footer">
@@ -48,7 +45,7 @@
         <div class="user-avatar" id="userAvatar">T</div>
         <div class="user-info">
           <p id="userName">Peter Ndonga</p>
-          <span id="userRoleLabel">Admin · Transporter</span>
+          <span id="userRoleLabel">Transporter</span>
         </div>
       </div>
       <button class="theme-btn" onclick="toggleDark()">🌙 Toggle Theme</button>
@@ -62,137 +59,120 @@
     <!-- Header -->
     <div class="page-header">
       <div class="page-title">
-        <h1>Fleet Vehicles</h1>
-        <p class="sub">/ Manage, track and monitor all registered vehicles</p>
+        <h1>Dashboard</h1>
+        <p class="sub">/ Live fleet overview · Sensor monitoring · Route tracking</p>
       </div>
-      <button class="btn-add" onclick="openModal()">+ Add Vehicle</button>
-    </div>
-
-    <!-- ORS API Key Banner -->
-    <div class="card ors-banner">
-      <div class="ors-banner-left">
-        <span class="ors-icon">🗺</span>
-        <div>
-          <div class="ors-title">OpenRouteService API Key</div>
-          <div class="ors-sub">Required for real road route generation between locations</div>
-        </div>
-      </div>
-      <div class="ors-banner-right">
-        <input type="password" id="orsKeyInput" placeholder="Paste your ORS API key here"/>
-        <button class="btn-save-key" onclick="setApiKey(document.getElementById('orsKeyInput').value)">Save Key</button>
+      <div class="live-indicator">
+        <span class="pulse-dot"></span>
+        LIVE &nbsp;<span id="liveTime">--:--:--</span>
       </div>
     </div>
 
-    <!-- Stats -->
-    <div class="v-stats">
-      <div class="card stat-card">
-        <span class="stat-ico">🚛</span>
-        <div class="stat-label">Total Vehicles</div>
-        <div class="stat-val green" id="statTotal">0</div>
-      </div>
+    <!-- Notifications panel — toggled by notifyBtn in dashboard.js -->
+    <div id="notifications" class="notifications-panel" style="display:none"></div>
+
+    <!-- Stat Cards — IDs must match dashboard.js exactly -->
+    <div class="cards">
       <div class="card stat-card">
         <span class="stat-ico">📍</span>
-        <div class="stat-label">Active Routes</div>
-        <div class="stat-val" id="statRoutes">0</div>
+        <div class="stat-label">GPS Location</div>
+        <div class="stat-val mono green" id="gps">--</div>
       </div>
       <div class="card stat-card">
-        <span class="stat-ico">🛡</span>
-        <div class="stat-label">Admin Access</div>
-        <div class="stat-val green">✓ Enabled</div>
+        <span class="stat-ico">🌡</span>
+        <div class="stat-label">Temperature</div>
+        <div class="stat-val red" id="temp">--</div>
+      </div>
+      <div class="card stat-card">
+        <span class="stat-ico">💧</span>
+        <div class="stat-label">Humidity</div>
+        <div class="stat-val blue" id="hum">--</div>
+      </div>
+      <div class="card stat-card">
+        <span class="stat-ico">🚛</span>
+        <div class="stat-label">Active Vehicles</div>
+        <div class="stat-val green" id="activeVehicles">--</div>
       </div>
     </div>
 
-    <!-- Vehicle Table -->
-    <div class="card big vehicles-table-wrap">
+    <!-- Chart + Vehicle List -->
+    <div class="dash-grid">
+
+      <!-- Sensor Chart — id="sensorChart" used by dashboard.js -->
+      <div class="card big">
+        <div class="card-header">
+          <h3>Live Sensor Readings</h3>
+          <span class="card-tag live">POLLING 5s</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="sensorChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Vehicle List — id="vehicleList" used by dashboard.js -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Fleet Vehicles</h3>
+          <a href="vehicles.html" class="card-tag" style="text-decoration:none">MANAGE →</a>
+        </div>
+        <div id="vehicleList" class="vehicle-list"></div>
+      </div>
+
+    </div>
+
+    <!-- Map — id="map" used by dashboard.js -->
+    <div class="card big">
       <div class="card-header">
-        <h3>Registered Vehicles</h3>
-        <span class="card-tag" id="vehicleCountTag">0 VEHICLES</span>
+        <h3>Live Route Map</h3>
+        <span class="card-tag" id="routeLabel">Click a vehicle to show route</span>
       </div>
-
-      <table id="vehicleTable">
-        <thead>
-          <tr>
-            <th>Vehicle Name</th>
-            <th>Route</th>
-            <th>Coordinates</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="vehicleList"></tbody>
-      </table>
-
-      <div class="empty-state" id="emptyState" style="display:none">
-        <div class="empty-icon">🚛</div>
-        <p>No vehicles registered yet.<br/>Click "+ Add Vehicle" to get started.</p>
-      </div>
+      <div id="map"></div>
     </div>
 
   </main>
 </div>
 
-<!-- MODAL -->
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal">
-    <button class="modal-close" onclick="closeModal()">✕</button>
-    <div class="modal-title" id="modalTitle">Add Vehicle</div>
-    <div class="modal-sub" id="modalSub">Register a new vehicle to the fleet</div>
+<!-- Required by dashboard.js for compatibility -->
+<div id="alerts" style="display:none"></div>
 
-    <form class="vehicle-form" id="vehicleForm" onsubmit="handleSubmit(event)">
-      <input type="hidden" id="editId"/>
+<script src="js/dashboard.js"></script>
+<script>
+  // Live clock
+  function updateClock() {
+    const el = document.getElementById("liveTime");
+    if (el) el.textContent = new Date().toLocaleTimeString();
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
 
-      <div class="form-group">
-        <label>Vehicle Name / Plate</label>
-        <input type="text" id="name" placeholder="e.g. KDV 405 S" required/>
-      </div>
+  // Role switcher
+  function switchRole(role, btn) {
+    document.querySelectorAll(".role-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    const avatar = document.getElementById("userAvatar");
+    const label  = document.getElementById("userRoleLabel");
+    if (role === "farmer") {
+      avatar.textContent = "F";
+      avatar.style.background = "#f5c842";
+      avatar.style.color = "#111";
+      label.textContent = "Farmer";
+    } else {
+      avatar.textContent = "T";
+      avatar.style.background = "#3ddc6e";
+      avatar.style.color = "#111";
+      label.textContent = "Transporter";
+    }
+  }
 
-      <div class="form-row">
-        <div class="form-group">
-          <label>From (City)</label>
-          <input type="text" id="from" placeholder="e.g. Nairobi"/>
-        </div>
-        <div class="form-group">
-          <label>To (City)</label>
-          <input type="text" id="to" placeholder="e.g. Nakuru"/>
-        </div>
-      </div>
-
-      <!-- Start coords -->
-      <div class="form-section-label">📍 Start Location</div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Start Latitude</label>
-          <input type="text" id="lat" placeholder="e.g. -1.2921" required/>
-        </div>
-        <div class="form-group">
-          <label>Start Longitude</label>
-          <input type="text" id="lng" placeholder="e.g. 36.8219" required/>
-        </div>
-      </div>
-
-      <!-- Destination coords -->
-      <div class="form-section-label">🏁 Destination</div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Destination Latitude</label>
-          <input type="text" id="destLat" placeholder="e.g. -0.3031"/>
-        </div>
-        <div class="form-group">
-          <label>Destination Longitude</label>
-          <input type="text" id="destLng" placeholder="e.g. 36.0800"/>
-        </div>
-      </div>
-
-      <button type="submit" class="btn-submit" id="submitBtn">Add Vehicle</button>
-    </form>
-  </div>
-</div>
-
-<!-- Toast -->
-<div class="toast" id="toast"></div>
-
-<!-- vehicles.js handles all logic -->
-<script src="js/vehicles.js"></script>
+  // Update active vehicles count after dashboard.js loads vehicles
+  document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(() => {
+      const cards = document.querySelectorAll(".vehicle-card");
+      const el = document.getElementById("activeVehicles");
+      if (el) el.textContent = cards.length || "--";
+    }, 2500);
+  });
+</script>
 
 <footer class="footer">
   © 2026 IoT Movers System &nbsp;|&nbsp; Real-time Fleet Tracking
