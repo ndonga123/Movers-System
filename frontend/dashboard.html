@@ -1,84 +1,202 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>IoT Movers Dashboard</title>
-
-<link rel="stylesheet" href="css/styles.css">
-
-<!-- Leaflet -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<!-- Routing -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css"/>
-<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
-
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vehicles — IoT Movers</title>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 </head>
 
 <body>
 <div class="layout">
 
+  <!-- SIDEBAR -->
   <aside class="sidebar">
-    <h2>IoT Movers System</h2>
-    <a class="active">Dashboard</a>
-   <a href="vehicles.html">Vehicles</a>
-    <a href="reports.html">Reports</a>
-    <button onclick="toggleDark()">🌙</button>
-    <a href="login.html">Logout</a>
-  </aside>
-
-  <main>
-    <h1>Welcome to the Dashboard</h1>
-    <p class="sub">Real-time fleet monitoring</p>
-<button id="notifyBtn">🔔 Alerts</button>
-
-    <div class="cards">
-      <div class="card">📍 GPS <span id="gps">--</span></div>
-      <div class="card">🌡 Temp <span id="temp">--</span></div>
-      <div class="card">💧 Humidity <span id="hum">--</span></div>
-      <div id="alerts" class="alert-box"></div>
-
+    <div class="sidebar-brand">
+      <div class="brand-icon">🌿</div>
+      <div>
+        <span class="brand-name">IoT Movers</span>
+        <span class="brand-sub">Kenya · Agri-Logistics</span>
+      </div>
     </div>
 
-    <div class="grid">
+    <div class="role-switcher">
+      <button class="role-btn active" onclick="switchRole('transporter',this)">Transporter</button>
+      <button class="role-btn" onclick="switchRole('farmer',this)">Farmer</button>
+    </div>
 
-  <!-- VEHICLE LIST -->
- <div class="card big">
-  <h3>Active Vehicles</h3>
-  <div id="vehicleList" class="vehicle-cards"></div>
+    <nav class="sidebar-nav">
+      <span class="nav-section">Monitor</span>
+      <a class="nav-item" href="dashboard.html">
+        <span class="nav-ico">⬡</span> Dashboard
+      </a>
+      <a class="nav-item active" href="vehicles.html">
+        <span class="nav-ico">🚛</span> Vehicles
+      </a>
+      <span class="nav-section">Insights</span>
+      <a class="nav-item" href="reports.html">
+        <span class="nav-ico">📊</span> Reports
+      </a>
+      <a class="nav-item" href="dashboard.html">
+        <span class="nav-ico">🔔</span> Alerts
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar" id="userAvatar">T</div>
+        <div class="user-info">
+          <p id="userName">Peter Ndonga</p>
+          <span id="userRoleLabel">Admin · Transporter</span>
+        </div>
+      </div>
+      <button class="theme-btn" onclick="toggleDark()">🌙 Toggle Theme</button>
+      <a class="logout-link" href="login.html">↩ Logout</a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+
+    <!-- Header -->
+    <div class="page-header">
+      <div class="page-title">
+        <h1>Fleet Vehicles</h1>
+        <p class="sub">/ Manage, track and monitor all registered vehicles</p>
+      </div>
+      <button class="btn-add" onclick="openModal()">+ Add Vehicle</button>
+    </div>
+
+    <!-- ORS API Key Banner -->
+    <div class="card ors-banner">
+      <div class="ors-banner-left">
+        <span class="ors-icon">🗺</span>
+        <div>
+          <div class="ors-title">OpenRouteService API Key</div>
+          <div class="ors-sub">Required for real road route generation between locations</div>
+        </div>
+      </div>
+      <div class="ors-banner-right">
+        <input type="password" id="orsKeyInput" placeholder="Paste your ORS API key here"/>
+        <button class="btn-save-key" onclick="setApiKey(document.getElementById('orsKeyInput').value)">Save Key</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="v-stats">
+      <div class="card stat-card">
+        <span class="stat-ico">🚛</span>
+        <div class="stat-label">Total Vehicles</div>
+        <div class="stat-val green" id="statTotal">0</div>
+      </div>
+      <div class="card stat-card">
+        <span class="stat-ico">📍</span>
+        <div class="stat-label">Active Routes</div>
+        <div class="stat-val" id="statRoutes">0</div>
+      </div>
+      <div class="card stat-card">
+        <span class="stat-ico">🛡</span>
+        <div class="stat-label">Admin Access</div>
+        <div class="stat-val green">✓ Enabled</div>
+      </div>
+    </div>
+
+    <!-- Vehicle Table -->
+    <div class="card big vehicles-table-wrap">
+      <div class="card-header">
+        <h3>Registered Vehicles</h3>
+        <span class="card-tag" id="vehicleCountTag">0 VEHICLES</span>
+      </div>
+
+      <table id="vehicleTable">
+        <thead>
+          <tr>
+            <th>Vehicle Name</th>
+            <th>Route</th>
+            <th>Coordinates</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="vehicleList"></tbody>
+      </table>
+
+      <div class="empty-state" id="emptyState" style="display:none">
+        <div class="empty-icon">🚛</div>
+        <p>No vehicles registered yet.<br/>Click "+ Add Vehicle" to get started.</p>
+      </div>
+    </div>
+
+  </main>
 </div>
 
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modalTitle">Add Vehicle</div>
+    <div class="modal-sub" id="modalSub">Register a new vehicle to the fleet</div>
 
-  <!-- CHART -->
-  <div class="card big">
-    <h3>Temperature & Humidity</h3>
-    <canvas id="sensorChart" height="120"></canvas>
+    <form class="vehicle-form" id="vehicleForm" onsubmit="handleSubmit(event)">
+      <input type="hidden" id="editId"/>
+
+      <div class="form-group">
+        <label>Vehicle Name / Plate</label>
+        <input type="text" id="name" placeholder="e.g. KDV 405 S" required/>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>From (City)</label>
+          <input type="text" id="from" placeholder="e.g. Nairobi"/>
+        </div>
+        <div class="form-group">
+          <label>To (City)</label>
+          <input type="text" id="to" placeholder="e.g. Nakuru"/>
+        </div>
+      </div>
+
+      <!-- Start coords -->
+      <div class="form-section-label">📍 Start Location</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Start Latitude</label>
+          <input type="text" id="lat" placeholder="e.g. -1.2921" required/>
+        </div>
+        <div class="form-group">
+          <label>Start Longitude</label>
+          <input type="text" id="lng" placeholder="e.g. 36.8219" required/>
+        </div>
+      </div>
+
+      <!-- Destination coords -->
+      <div class="form-section-label">🏁 Destination</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Destination Latitude</label>
+          <input type="text" id="destLat" placeholder="e.g. -0.3031"/>
+        </div>
+        <div class="form-group">
+          <label>Destination Longitude</label>
+          <input type="text" id="destLng" placeholder="e.g. 36.0800"/>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">Add Vehicle</button>
+    </form>
   </div>
-
-  <!-- MAP -->
-  
-
-  <div class="card big">
-    <h3>GPS Route</h3>
-     <h4 id="routeLabel">No route selected</h4>
-    <div id="map" style="height:300px;border-radius:12px;"></div>
-  </div>
-
 </div>
-    </main>
-  </div>
 
-  <!-- Your dashboard logic -->
-  <script src="js/dashboard.js"></script>
+<!-- Toast -->
+<div class="toast" id="toast"></div>
 
-  <footer class="footer">
-  © 2026 IoT Movers System | Real-time Fleet Tracking
+<!-- vehicles.js handles all logic -->
+<script src="js/vehicles.js"></script>
+
+<footer class="footer">
+  © 2026 IoT Movers System &nbsp;|&nbsp; Real-time Fleet Tracking
 </footer>
-
 
 </body>
 </html>

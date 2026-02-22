@@ -1,54 +1,164 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Drivers</title>
-<link rel="stylesheet" href="css/styles.css">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Drivers — IoT Movers</title>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 </head>
 
 <body>
 <div class="layout">
 
-<aside class="sidebar">
-  <h2>IoT Movers</h2>
-  <a href="dashboard.html">Dashboard</a>
-  <a href="vehicles.html">Vehicles</a>
-  <a class="active">Drivers</a>
-  <a href="sensors.html">Sensors</a>
-  <a href="reports.html">Reports</a>
-  <button onclick="toggleDark()">🌙</button>
-</aside>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🌿</div>
+      <div>
+        <span class="brand-name">IoT Movers</span>
+        <span class="brand-sub">Kenya · Agri-Logistics</span>
+      </div>
+    </div>
 
-<main>
-  <h1>Drivers</h1>
+    <div class="role-switcher">
+      <button class="role-btn active" onclick="switchRole('transporter',this)">Transporter</button>
+      <button class="role-btn" onclick="switchRole('farmer',this)">Farmer</button>
+    </div>
 
-  <div class="card big">
-    <h3>Registered Drivers</h3>
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Phone</th>
-          <th>Assigned Vehicle</th>
-        </tr>
-      </thead>
-      <tbody id="driverList"></tbody>
-    </table>
-  </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section">Monitor</span>
+      <a class="nav-item" href="dashboard.html">
+        <span class="nav-ico">⬡</span> Dashboard
+      </a>
+      <a class="nav-item" href="vehicles.html">
+        <span class="nav-ico">🚛</span> Vehicles
+      </a>
+      <a class="nav-item active" href="drivers.html">
+        <span class="nav-ico">👤</span> Drivers
+      </a>
+      <a class="nav-item" href="sensors.html">
+        <span class="nav-ico">📡</span> Sensors
+      </a>
+      <span class="nav-section">Insights</span>
+      <a class="nav-item" href="reports.html">
+        <span class="nav-ico">📊</span> Reports
+      </a>
+      <a class="nav-item" href="dashboard.html">
+        <span class="nav-ico">🔔</span> Alerts
+      </a>
+    </nav>
 
-  <div class="card big">
-    <h3>Add Driver</h3>
-    <form id="driverForm">
-      <input id="dname" placeholder="Driver Name" required>
-      <input id="dphone" placeholder="Phone Number" required>
-      <input id="dvehicle" placeholder="Vehicle ID">
-      <button>Add Driver</button>
-    </form>
-  </div>
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar" id="userAvatar">T</div>
+        <div class="user-info">
+          <p id="userName">Peter Ndonga</p>
+          <span id="userRoleLabel">Admin · Transporter</span>
+        </div>
+      </div>
+      <button class="theme-btn" onclick="toggleDark()">🌙 Toggle Theme</button>
+      <a class="logout-link" href="login.html">↩ Logout</a>
+    </div>
+  </aside>
 
-</main>
+  <!-- MAIN -->
+  <main>
+
+    <!-- Header -->
+    <div class="page-header">
+      <div class="page-title">
+        <h1>Fleet Drivers</h1>
+        <p class="sub">/ Manage all registered drivers</p>
+      </div>
+      <button class="btn-add" onclick="openModal()">+ Add Driver</button>
+    </div>
+
+    <!-- Stats -->
+    <div class="v-stats">
+      <div class="card stat-card">
+        <span class="stat-ico">👤</span>
+        <div class="stat-label">Total Drivers</div>
+        <div class="stat-val green" id="statTotal">0</div>
+      </div>
+      <div class="card stat-card">
+        <span class="stat-ico">🚛</span>
+        <div class="stat-label">Assigned</div>
+        <div class="stat-val" id="statAssigned">0</div>
+      </div>
+      <div class="card stat-card">
+        <span class="stat-ico">🟡</span>
+        <div class="stat-label">Unassigned</div>
+        <div class="stat-val yellow" id="statUnassigned">0</div>
+      </div>
+    </div>
+
+    <!-- Drivers Table -->
+    <div class="card big vehicles-table-wrap">
+      <div class="card-header">
+        <h3>Registered Drivers</h3>
+        <span class="card-tag" id="driverCountTag">0 DRIVERS</span>
+      </div>
+
+      <table id="driverTable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Assigned Vehicle</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="driverList"></tbody>
+      </table>
+
+      <div class="empty-state" id="emptyState" style="display:none">
+        <div class="empty-icon">👤</div>
+        <p>No drivers registered yet.<br/>Click "+ Add Driver" to get started.</p>
+      </div>
+    </div>
+
+  </main>
 </div>
 
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modalTitle">Add Driver</div>
+    <div class="modal-sub" id="modalSub">Register a new driver to the fleet</div>
+
+    <form class="vehicle-form" id="driverForm" onsubmit="handleSubmit(event)">
+      <input type="hidden" id="editId"/>
+
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="dname" placeholder="e.g. James Mwangi" required/>
+      </div>
+
+      <div class="form-group">
+        <label>Phone Number</label>
+        <input type="text" id="dphone" placeholder="e.g. 0712 345 678" required/>
+      </div>
+
+      <div class="form-group">
+        <label>Assigned Vehicle ID</label>
+        <input type="text" id="dvehicle" placeholder="e.g. KDV 405 S (optional)"/>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">Add Driver</button>
+    </form>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
 <script src="js/drivers.js"></script>
+
+<footer class="footer">
+  © 2026 IoT Movers System &nbsp;|&nbsp; Real-time Fleet Tracking
+</footer>
+
 </body>
 </html>

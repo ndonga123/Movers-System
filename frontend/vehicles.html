@@ -1,92 +1,354 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Vehicles</title>
-  <link rel="stylesheet" href="css/styles.css">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vehicles — IoT Movers</title>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 </head>
 
 <body>
 <div class="layout">
 
+  <!-- SIDEBAR -->
   <aside class="sidebar">
-    <h2>IoT Movers System</h2>
-    <a href="dashboard.html">Dashboard</a>
-    <a class="active">Vehicles</a>
-    <a href="reports.html">Reports</a>
-    <button onclick="toggleDark()">🌙</button>
-    <a href="login.html">Logout</a>
+    <div class="sidebar-brand">
+      <div class="brand-icon">🌿</div>
+      <div>
+        <span class="brand-name">IoT Movers</span>
+        <span class="brand-sub">Kenya · Agri-Logistics</span>
+      </div>
+    </div>
+
+    <div class="role-switcher">
+      <button class="role-btn active" onclick="switchRole('transporter',this)">Transporter</button>
+      <button class="role-btn" onclick="switchRole('farmer',this)">Farmer</button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <span class="nav-section">Monitor</span>
+      <a class="nav-item" href="dashboard.html">
+        <span class="nav-ico">⬡</span> Dashboard
+      </a>
+      <a class="nav-item active" href="vehicles.html">
+        <span class="nav-ico">🚛</span> Vehicles
+      </a>
+      <a class="nav-item" href="drivers.html">
+        <span class="nav-ico">👤</span> Drivers
+      </a>
+      <a class="nav-item" href="sensors.html">
+        <span class="nav-ico">📡</span> Sensors
+      </a>
+      <span class="nav-section">Insights</span>
+      <a class="nav-item" href="reports.html">
+        <span class="nav-ico">📊</span> Reports
+      </a>
+      <a class="nav-item" href="dashboard.html">
+        <span class="nav-ico">🔔</span> Alerts
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar" id="userAvatar">T</div>
+        <div class="user-info">
+          <p id="userName">Peter Ndonga</p>
+          <span id="userRoleLabel">Admin · Transporter</span>
+        </div>
+      </div>
+      <button class="theme-btn" onclick="toggleDark()">🌙 Toggle Theme</button>
+      <a class="logout-link" href="login.html">↩ Logout</a>
+    </div>
   </aside>
 
+  <!-- MAIN -->
   <main>
-    <h1>Vehicles</h1>
-    <p>Live fleet status</p>
 
-    <div class="card big">
-      <ul id="vehicleList" class="vehicle-list"></ul>
+    <div class="page-header">
+      <div class="page-title">
+        <h1>Fleet Vehicles</h1>
+        <p class="sub">/ Manage and monitor all registered vehicles</p>
+      </div>
+      <button class="btn-add" onclick="openModal()">+ Add Vehicle</button>
     </div>
-    <div class="card big">
-  <h3>Add Vehicle</h3>
 
-  <form id="addVehicleForm" class="vehicle-form">
-    <input type="text" id="name" placeholder="Vehicle Name" required />
-    <input type="text" id="lat" placeholder="Start Latitude" required />
-    <input type="text" id="lng" placeholder="Start Longitude" required />
-    <input id="from" placeholder="From (e.g Nairobi)">
-    <input id="to" placeholder="To (e.g Nakuru)">
-    <button type="submit">Add Vehicle</button>
-  </form>
-</div>
+    <div class="v-stats">
+      <div class="card stat-card">
+        <span class="stat-ico">🚛</span>
+        <div class="stat-label">Total Vehicles</div>
+        <div class="stat-val green" id="statTotal">0</div>
+      </div>
+      <div class="card stat-card">
+        <span class="stat-ico">📍</span>
+        <div class="stat-label">Active Routes</div>
+        <div class="stat-val" id="statRoutes">0</div>
+      </div>
+      <div class="card stat-card">
+        <span class="stat-ico">🛡</span>
+        <div class="stat-label">Admin Access</div>
+        <div class="stat-val green">✓ Enabled</div>
+      </div>
+    </div>
+
+    <div class="card big vehicles-table-wrap">
+      <div class="card-header">
+        <h3>Registered Vehicles</h3>
+        <span class="card-tag" id="vehicleCountTag">0 VEHICLES</span>
+      </div>
+
+      <table id="vehicleTable">
+        <thead>
+          <tr>
+            <th>Vehicle Name</th>
+            <th>Route</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="vehicleList"></tbody>
+      </table>
+
+      <div class="empty-state" id="emptyState" style="display:none">
+        <div class="empty-icon">🚛</div>
+        <p>No vehicles registered yet.<br/>Click "+ Add Vehicle" to get started.</p>
+      </div>
+    </div>
 
   </main>
-
 </div>
 
-<script src="js/vehicles.js"></script>
+<!-- MODAL — removed lat/lng fields, city names only -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modalTitle">Add Vehicle</div>
+    <div class="modal-sub" id="modalSub">Enter vehicle name and city names — route generated automatically</div>
+
+    <form class="vehicle-form" id="vehicleForm" onsubmit="handleSubmit(event)">
+      <input type="hidden" id="editId"/>
+
+      <div class="form-group">
+        <label>Vehicle Name / Plate</label>
+        <input type="text" id="name" placeholder="e.g. KDV 405 S" required/>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>From (City)</label>
+          <input type="text" id="from" placeholder="e.g. Nairobi" required/>
+        </div>
+        <div class="form-group">
+          <label>To (City)</label>
+          <input type="text" id="to" placeholder="e.g. Nakuru" required/>
+        </div>
+      </div>
+
+      <!-- Shows while backend is geocoding + routing -->
+      <div class="route-status" id="routeStatus" style="display:none">
+        <span class="pulse-dot"></span>
+        <span id="routeStatusMsg">Generating route...</span>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">Add Vehicle</button>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script>
-const API = "https://movers-system.onrender.com/api/vehicles";
+  const API = "https://movers-system.onrender.com/api/vehicles";
+  let editingId = null;
 
-document.getElementById("vehicleForm").addEventListener("submit", async e => {
-  e.preventDefault();
+  async function loadVehicles() {
+    try {
+      const res      = await fetch(API);
+      const vehicles = await res.json();
+      const tbody    = document.getElementById("vehicleList");
+      const empty    = document.getElementById("emptyState");
+      const table    = document.getElementById("vehicleTable");
 
-  const data = {
-    name: document.getElementById("name").value,
-    lat: document.getElementById("lat").value,
-    lng: document.getElementById("lng").value
-  };
+      document.getElementById("statTotal").textContent       = vehicles.length;
+      document.getElementById("statRoutes").textContent      = vehicles.filter(v => v.from && v.to).length;
+      document.getElementById("vehicleCountTag").textContent = vehicles.length + " VEHICLES";
 
-  await fetch(API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
+      if (vehicles.length === 0) {
+        table.style.display = "none";
+        empty.style.display = "block";
+        return;
+      }
+
+      table.style.display = "table";
+      empty.style.display = "none";
+      tbody.innerHTML = "";
+
+      vehicles.forEach(v => {
+        const hasRoute = v.route && v.route.length > 1;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="td-plate">🚛 ${v.name || "—"}</td>
+          <td class="td-route">${v.from || "—"} → ${v.to || "—"}</td>
+          <td>
+            <span class="status-badge ${hasRoute ? "status-transit" : "status-pending"}">
+              ${hasRoute ? "ROUTE SET" : "NO ROUTE"}
+            </span>
+          </td>
+          <td>
+            <div class="td-actions">
+              <button class="btn-edit"
+                onclick="openEditModal('${v._id}','${v.name}','${v.from||""}','${v.to||""}')">
+                ✏ Edit
+              </button>
+              <button class="btn-delete"
+                onclick="deleteVehicle('${v._id}','${v.name}')">
+                🗑 Delete
+              </button>
+            </div>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+
+    } catch (err) {
+      showToast("Failed to load vehicles", true);
+    }
+  }
+
+  function openModal() {
+    editingId = null;
+    document.getElementById("vehicleForm").reset();
+    document.getElementById("editId").value           = "";
+    document.getElementById("modalTitle").textContent = "Add Vehicle";
+    document.getElementById("modalSub").textContent   = "Enter vehicle name and city names — route generated automatically";
+    document.getElementById("submitBtn").textContent  = "Add Vehicle";
+    hideRouteStatus();
+    document.getElementById("modalOverlay").classList.add("open");
+  }
+
+  // Only 4 params now — no lat/lng
+  function openEditModal(id, name, from, to) {
+    editingId = id;
+    document.getElementById("editId").value           = id;
+    document.getElementById("name").value             = name;
+    document.getElementById("from").value             = from;
+    document.getElementById("to").value               = to;
+    document.getElementById("modalTitle").textContent = "Edit Vehicle";
+    document.getElementById("modalSub").textContent   = "Update vehicle details";
+    document.getElementById("submitBtn").textContent  = "Save Changes";
+    hideRouteStatus();
+    document.getElementById("modalOverlay").classList.add("open");
+  }
+
+  function closeModal() {
+    document.getElementById("modalOverlay").classList.remove("open");
+    editingId = null;
+  }
+
+  document.getElementById("modalOverlay").addEventListener("click", function(e) {
+    if (e.target === this) closeModal();
   });
 
-  alert("Vehicle added!");
-  e.target.reset();
+  function showRouteStatus(msg) {
+    const el    = document.getElementById("routeStatus");
+    const msgEl = document.getElementById("routeStatusMsg");
+    if (el)    el.style.display   = "flex";
+    if (msgEl) msgEl.textContent  = msg;
+  }
+
+  function hideRouteStatus() {
+    const el = document.getElementById("routeStatus");
+    if (el) el.style.display = "none";
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    // Only name, from, to — backend handles geocoding + routing
+    const data = {
+      name: document.getElementById("name").value.trim(),
+      from: document.getElementById("from").value.trim(),
+      to:   document.getElementById("to").value.trim()
+    };
+
+    const btn = document.getElementById("submitBtn");
+    btn.disabled = true;
+
+    try {
+      if (editingId) {
+        btn.textContent = "Saving...";
+        await fetch(`${API}/${editingId}`, {
+          method:  "PUT",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify(data)
+        });
+        showToast("✓ Vehicle updated");
+      } else {
+        btn.textContent = "Generating route...";
+        showRouteStatus("Geocoding cities and generating road route...");
+        await fetch(API, {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify(data)
+        });
+        showToast("✓ Vehicle added with route");
+      }
+
+      closeModal();
+      loadVehicles();
+
+    } catch (err) {
+      showToast("Error saving vehicle — check city names", true);
+      hideRouteStatus();
+    } finally {
+      btn.disabled    = false;
+      btn.textContent = editingId ? "Save Changes" : "Add Vehicle";
+    }
+  }
+
+  async function deleteVehicle(id, name) {
+    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+    try {
+      await fetch(`${API}/${id}`, { method: "DELETE" });
+      showToast("✓ Vehicle deleted");
+      loadVehicles();
+    } catch (err) {
+      showToast("Error deleting vehicle", true);
+    }
+  }
+
+  function showToast(msg, isError = false) {
+    const t = document.getElementById("toast");
+    t.textContent   = msg;
+    t.className     = "toast" + (isError ? " error" : "");
+    t.style.display = "block";
+    setTimeout(() => { t.style.display = "none"; }, 3000);
+  }
+
+  function toggleDark() { document.body.classList.toggle("dark"); }
+
+  function switchRole(role, btn) {
+    document.querySelectorAll(".role-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    const avatar = document.getElementById("userAvatar");
+    const label  = document.getElementById("userRoleLabel");
+    if (role === "farmer") {
+      avatar.textContent = "F";
+      avatar.style.background = "#f5c842";
+      avatar.style.color = "#111";
+      label.textContent = "Farmer";
+    } else {
+      avatar.textContent = "T";
+      avatar.style.background = "#3ddc6e";
+      avatar.style.color = "#111";
+      label.textContent = "Admin · Transporter";
+    }
+  }
+
   loadVehicles();
-});
-
-async function loadVehicles() {
-  const res = await fetch(API);
-  const vehicles = await res.json();
-
-  const list = document.getElementById("vehicleList");
-  if (!list) return;
-
-  list.innerHTML = "";
-
-  vehicles.forEach(v => {
-    const li = document.createElement("li");
-    li.textContent = `${v.name} (${v.lat}, ${v.lng})`;
-    list.appendChild(li);
-  });
-}
-
-loadVehicles();
 </script>
 
 <footer class="footer">
-  © 2026 IoT Movers System | Real-time Fleet Tracking
+  © 2026 IoT Movers System &nbsp;|&nbsp; Real-time Fleet Tracking
 </footer>
 
 </body>

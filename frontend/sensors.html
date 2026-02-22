@@ -1,44 +1,171 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Sensors</title>
-<link rel="stylesheet" href="css/styles.css">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sensors — IoT Movers</title>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
 <div class="layout">
 
-<aside class="sidebar">
-  <h2>IoT Movers</h2>
-  <a href="dashboard.html">Dashboard</a>
-  <a href="vehicles.html">Vehicles</a>
-  <a href="drivers.html">Drivers</a>
-  <a class="active">Sensors</a>
-  <a href="reports.html">Reports</a>
-</aside>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🌿</div>
+      <div>
+        <span class="brand-name">IoT Movers</span>
+        <span class="brand-sub">Kenya · Agri-Logistics</span>
+      </div>
+    </div>
 
-<main>
-<h1>Sensor Data</h1>
+    <div class="role-switcher">
+      <button class="role-btn active" onclick="switchRole('transporter',this)">Transporter</button>
+      <button class="role-btn" onclick="switchRole('farmer',this)">Farmer</button>
+    </div>
 
-<div class="card big">
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th>Vehicle</th>
-        <th>Temp (°C)</th>
-        <th>Humidity (%)</th>
-        <th>GPS</th>
-        <th>Time</th>
-      </tr>
-    </thead>
-    <tbody id="sensorTable"></tbody>
-  </table>
-</div>
+    <nav class="sidebar-nav">
+      <span class="nav-section">Monitor</span>
+      <a class="nav-item" href="dashboard.html">
+        <span class="nav-ico">⬡</span> Dashboard
+      </a>
+      <a class="nav-item" href="vehicles.html">
+        <span class="nav-ico">🚛</span> Vehicles
+      </a>
+      <a class="nav-item" href="drivers.html">
+        <span class="nav-ico">👤</span> Drivers
+      </a>
+      <a class="nav-item active" href="sensors.html">
+        <span class="nav-ico">📡</span> Sensors
+      </a>
+      <span class="nav-section">Insights</span>
+      <a class="nav-item" href="reports.html">
+        <span class="nav-ico">📊</span> Reports
+      </a>
+      <a class="nav-item" href="dashboard.html">
+        <span class="nav-ico">🔔</span> Alerts
+      </a>
+    </nav>
 
-</main>
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar" id="userAvatar">T</div>
+        <div class="user-info">
+          <p id="userName">Peter Ndonga</p>
+          <span id="userRoleLabel">Transporter</span>
+        </div>
+      </div>
+      <button class="theme-btn" onclick="toggleDark()">🌙 Toggle Theme</button>
+      <a class="logout-link" href="login.html">↩ Logout</a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+
+    <!-- Header -->
+    <div class="page-header">
+      <div class="page-title">
+        <h1>Sensor Data</h1>
+        <p class="sub">/ Live readings from ESP8266 · DHT11 · GPS</p>
+      </div>
+      <div class="live-indicator">
+        <span class="pulse-dot"></span>
+        LIVE &nbsp;<span id="liveTime">--:--:--</span>
+      </div>
+    </div>
+
+    <!-- Live Gauge Cards -->
+    <div class="cards">
+      <div class="card stat-card">
+        <span class="stat-ico">🌡</span>
+        <div class="stat-label">Temperature</div>
+        <div class="stat-val red" id="gaugeTemp">--</div>
+        <div class="stat-sub">°C · Threshold: 30°C</div>
+      </div>
+      <div class="card stat-card">
+        <span class="stat-ico">💧</span>
+        <div class="stat-label">Humidity</div>
+        <div class="stat-val blue" id="gaugeHumid">--</div>
+        <div class="stat-sub">% · Normal: &lt;80%</div>
+      </div>
+      <div class="card stat-card">
+        <span class="stat-ico">📍</span>
+        <div class="stat-label">GPS Location</div>
+        <div class="stat-val mono green" id="gaugeGPS">--</div>
+        <div class="stat-sub">LAT · LNG</div>
+      </div>
+      <div class="card stat-card">
+        <span class="stat-ico">📶</span>
+        <div class="stat-label">Readings Logged</div>
+        <div class="stat-val" id="gaugeCount">0</div>
+        <div class="stat-sub">Since page load</div>
+      </div>
+    </div>
+
+    <!-- Chart + Table -->
+    <div class="sensors-grid">
+
+      <!-- Live Chart -->
+      <div class="card big">
+        <div class="card-header">
+          <h3>Live Sensor Chart</h3>
+          <span class="card-tag live">POLLING 5s</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="sensorChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Alert Log -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Alert Log</h3>
+          <span class="card-tag red-tag" id="alertCount">0 ALERTS</span>
+        </div>
+        <div id="alertLog" class="alert-log">
+          <div class="alert-log-empty">No alerts triggered yet</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sensor History Table -->
+    <div class="card big">
+      <div class="card-header">
+        <h3>Sensor Reading History</h3>
+        <div style="display:flex; gap:8px;">
+          <span class="card-tag" id="readingCountTag">0 READINGS</span>
+          <button class="btn-clear" onclick="clearTable()">Clear</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Vehicle</th>
+              <th>Temp (°C)</th>
+              <th>Humidity (%)</th>
+              <th>GPS</th>
+              <th>Time</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="sensorTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
 </div>
 
 <script src="js/sensors.js"></script>
+
+<footer class="footer">
+  © 2026 IoT Movers System &nbsp;|&nbsp; Real-time Fleet Tracking
+</footer>
+
 </body>
 </html>
