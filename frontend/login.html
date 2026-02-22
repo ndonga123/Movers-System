@@ -1,26 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Login - IoT Movers</title>
-<link rel="stylesheet" href="css/styles.css">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login — IoT Movers</title>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 </head>
-<body class="center">
 
-<div class="login-box">
-  <h2>Login</h2>
-  <input id="user" placeholder="Username">
-  <input id="pass" type="password" placeholder="Password">
-  <button onclick="login()">Login</button>
-  <p id="msg"></p>
-</div>
+<body class="login-page">
 
-<script src="js/login.js"></script>
+  <div class="login-wrap">
+
+    <!-- Left panel -->
+    <div class="login-left">
+      <div class="login-brand">
+        <div class="brand-icon">🌿</div>
+        <span class="brand-name">IoT Movers</span>
+      </div>
+      <h1 class="login-headline">Agricultural Fleet<br/>Tracking System</h1>
+      <p class="login-tagline">Real-time IoT monitoring for Kenya's agri-logistics network. Reducing post-harvest losses through smart transport.</p>
+      <div class="login-stats">
+        <div class="login-stat">
+          <div class="login-stat-val">30%</div>
+          <div class="login-stat-label">Post-harvest loss reduction</div>
+        </div>
+        <div class="login-stat">
+          <div class="login-stat-val">24/7</div>
+          <div class="login-stat-label">Live sensor monitoring</div>
+        </div>
+        <div class="login-stat">
+          <div class="login-stat-val">GPS</div>
+          <div class="login-stat-label">Real-time route tracking</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right panel — form -->
+    <div class="login-right">
+      <div class="login-box">
+        <div class="login-box-header">
+          <h2>Welcome back</h2>
+          <p>Sign in to your fleet dashboard</p>
+        </div>
+
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="user" placeholder="Enter your username" autocomplete="username"/>
+        </div>
+
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="pass" placeholder="Enter your password" autocomplete="current-password"/>
+        </div>
+
+        <div class="login-role-row">
+          <span class="login-role-label">Login as:</span>
+          <div class="login-role-btns">
+            <button class="login-role-btn active" id="roleAdmin"   onclick="setRole('admin',   this)">Admin</button>
+            <button class="login-role-btn"         id="roleDriver"  onclick="setRole('driver',  this)">Driver</button>
+            <button class="login-role-btn"         id="roleFarmer"  onclick="setRole('farmer',  this)">Farmer</button>
+          </div>
+        </div>
+
+        <button class="btn-login" onclick="login()">Sign In →</button>
+
+        <p class="login-msg" id="msg"></p>
+
+        <div class="login-hint">
+          <span>Demo credentials:</span>
+          <code>admin / 1234</code>
+        </div>
+      </div>
+    </div>
+
+  </div>
 
 <footer class="footer">
-  © 2026 IoT Movers System | Real-time Fleet Tracking
+  © 2026 IoT Movers System &nbsp;|&nbsp; Real-time Fleet Tracking &nbsp;|&nbsp; Nakuru · Nairobi · Meru
 </footer>
 
+<script src="js/login.js"></script>
 
 </body>
 </html>

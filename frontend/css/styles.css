@@ -1191,3 +1191,200 @@ tbody tr:hover td { background: rgba(61,220,110,0.03); }
 @media (max-width: 1100px) {
   .sensors-grid { grid-template-columns: 1fr; }
 }
+/* ============================================
+   LOGIN PAGE — paste at bottom of styles.css
+   ============================================ */
+
+body.login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: var(--bg);
+}
+
+.login-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+}
+
+/* Left panel */
+.login-left {
+  background: linear-gradient(160deg, #0d1f10 0%, #111a14 100%);
+  border-right: 1px solid var(--border);
+  padding: 60px 52px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 28px;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.login-brand .brand-icon { font-size: 28px; }
+.login-brand .brand-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--accent);
+  font-family: var(--font);
+}
+
+.login-headline {
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.login-tagline {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.8;
+  max-width: 340px;
+}
+
+.login-stats {
+  display: flex;
+  gap: 32px;
+  margin-top: 12px;
+}
+
+.login-stat-val {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--accent);
+  font-family: var(--mono);
+}
+
+.login-stat-label {
+  font-size: 10px;
+  color: var(--muted);
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 3px;
+}
+
+/* Right panel */
+.login-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  background: var(--bg);
+}
+
+.login-box {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.login-box-header h2 {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.login-box-header p {
+  font-size: 13px;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+
+/* Role selector */
+.login-role-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.login-role-label {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.login-role-btns { display: flex; gap: 8px; }
+
+.login-role-btn {
+  padding: 6px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.login-role-btn.active {
+  background: rgba(61,220,110,0.12);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.login-role-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Login button */
+.btn-login {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.btn-login:hover    { opacity: 0.88; transform: translateY(-1px); }
+.btn-login:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* Messages */
+.login-msg        { font-size: 12px; font-family: var(--mono); min-height: 18px; text-align: center; }
+.login-msg.error   { color: var(--accent3); }
+.login-msg.success { color: var(--accent); }
+
+/* Hint */
+.login-hint {
+  text-align: center;
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--muted);
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.login-hint code {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 2px 8px;
+  color: var(--accent);
+  margin-left: 6px;
+}
+
+/* Responsive */
+@media (max-width: 800px) {
+  .login-wrap          { grid-template-columns: 1fr; }
+  .login-left          { display: none; }
+  .login-right         { padding: 40px 24px; min-height: 100vh; }
+}
