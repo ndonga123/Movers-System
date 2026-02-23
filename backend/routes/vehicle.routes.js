@@ -34,6 +34,14 @@ router.get("/", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+router.get("/fix-index", async (req, res) => {
+  try {
+    await Vehicle.collection.dropIndex("plate_1");
+    res.json({ msg: "Index dropped successfully" });
+  } catch (err) {
+    res.json({ msg: "Index not found or already dropped", err: err.message });
+  }
+});
 
 // ── POST add vehicle ──
 // Receives: name, from, to (city names only)
