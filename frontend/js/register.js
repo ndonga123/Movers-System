@@ -1,34 +1,41 @@
 /* ============================================
-   login.js — Authentication
+   register.js — Account Registration
    IoT Movers System
    ============================================ */
 
 const API = "https://movers-system.onrender.com/api/auth";
 
-async function login() {
-  const email    = document.getElementById("user").value.trim();
-  const password = document.getElementById("pass").value.trim();
+async function register() {
+  const name     = document.getElementById("name").value.trim();
+  const email    = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const role     = document.getElementById("role").value;
   const btn      = document.querySelector(".btn-login");
 
-  if (!email || !password) {
-    showMsg("Please enter your email and password", true);
+  if (!name || !email || !password) {
+    showMsg("Please fill in all fields", true);
     return;
   }
 
-  btn.textContent = "Signing in...";
+  if (password.length < 6) {
+    showMsg("Password must be at least 6 characters", true);
+    return;
+  }
+
+  btn.textContent = "Creating account...";
   btn.disabled    = true;
 
   try {
-    const res  = await fetch(`${API}/login`, {
+    const res  = await fetch(`${API}/register`, {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ email, password })
+      body:    JSON.stringify({ name, email, password, role })
     });
 
     const data = await res.json();
 
     if (!res.ok) {
-      showMsg(data.error || "Invalid email or password", true);
+      showMsg(data.error || "Registration failed", true);
       return;
     }
 
@@ -39,15 +46,15 @@ async function login() {
     localStorage.setItem("userName", data.user.name);
     localStorage.setItem("email",    data.user.email);
 
-    showMsg("✓ Login successful — redirecting...", false);
+    showMsg("✓ Account created! Redirecting...", false);
     setTimeout(() => { location.href = "dashboard.html"; }, 800);
 
   } catch (err) {
-    console.error("Login error:", err);
+    console.error("Register error:", err);
     showMsg("Network error — try again", true);
   } finally {
     btn.disabled    = false;
-    btn.textContent = "Sign In →";
+    btn.textContent = "Create Account →";
   }
 }
 
@@ -57,11 +64,9 @@ function showMsg(text, isError) {
   msg.className   = "login-msg" + (isError ? " error" : " success");
 }
 
+// Enter key support
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("pass").addEventListener("keydown", e => {
-    if (e.key === "Enter") login();
-  });
-  document.getElementById("user").addEventListener("keydown", e => {
-    if (e.key === "Enter") login();
+  document.getElementById("password").addEventListener("keydown", e => {
+    if (e.key === "Enter") register();
   });
 });

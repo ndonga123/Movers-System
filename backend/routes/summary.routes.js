@@ -1,4 +1,4 @@
-const router = require("express").Router();
+const router    = require("express").Router();
 const sendAlert = require("../utils/mailer");
 
 // Smooth demo GPS route (Nairobi CBD loop)
@@ -13,40 +13,48 @@ const route = [
   [-1.2854, 36.8343]
 ];
 
-let index = 0;
-let temp = 26;
+let index    = 0;
+let temp     = 26;
 let humidity = 60;
 
 router.get("/", async (req, res) => {
   try {
-    // GPS move
+    // Move along GPS route
     const [lat, lng] = route[index];
     index = (index + 1) % route.length;
 
-    // smooth random sensor change
-    temp += (Math.random() - 0.5);
+    // Smooth random sensor change
+    temp     += (Math.random() - 0.5);
     humidity += (Math.random() - 0.5) * 2;
 
-    // EMAIL ALERTS
+    // Email alerts for threshold breaches
     if (temp > 30) {
-      await sendAlert(
-        "manager@email.com",
-        "🔥 Temperature Alert",
-        `Vehicle temperature is ${temp.toFixed(1)}°C`
-      );
+      try {
+        await sendAlert(
+          "manager@email.com",
+          "🔥 Temperature Alert",
+          `Vehicle temperature is ${temp.toFixed(1)}°C — cargo at risk!`
+        );
+      } catch (mailErr) {
+        console.warn("Email alert failed:", mailErr.message);
+      }
     }
 
     if (humidity > 80) {
-      await sendAlert(
-        "manager@email.com",
-        "💧 Humidity Alert",
-        `Vehicle humidity is ${humidity.toFixed(1)}%`
-      );
+      try {
+        await sendAlert(
+          "manager@email.com",
+          "💧 Humidity Alert",
+          `Vehicle humidity is ${humidity.toFixed(1)}% — spoilage risk!`
+        );
+      } catch (mailErr) {
+        console.warn("Email alert failed:", mailErr.message);
+      }
     }
 
     res.json({
-      gps: `${lat.toFixed(5)},${lng.toFixed(5)}`,
-      temp: temp.toFixed(1),
+      gps:      `${lat.toFixed(5)},${lng.toFixed(5)}`,
+      temp:     temp.toFixed(1),
       humidity: humidity.toFixed(1)
     });
 

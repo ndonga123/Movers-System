@@ -36,7 +36,7 @@
       </div>
     </div>
 
-    <!-- Right panel — form -->
+    <!-- Right panel -->
     <div class="login-right">
       <div class="login-box">
         <div class="login-box-header">
@@ -45,8 +45,8 @@
         </div>
 
         <div class="form-group">
-          <label>Username</label>
-          <input type="text" id="user" placeholder="Enter your username" autocomplete="username"/>
+          <label>Email Address</label>
+          <input type="email" id="user" placeholder="e.g. james@movers.co.ke" autocomplete="email"/>
         </div>
 
         <div class="form-group">
@@ -54,22 +54,13 @@
           <input type="password" id="pass" placeholder="Enter your password" autocomplete="current-password"/>
         </div>
 
-        <div class="login-role-row">
-          <span class="login-role-label">Login as:</span>
-          <div class="login-role-btns">
-            <button class="login-role-btn active" id="roleAdmin"   onclick="setRole('admin',   this)">Admin</button>
-            <button class="login-role-btn"         id="roleDriver"  onclick="setRole('driver',  this)">Driver</button>
-            <button class="login-role-btn"         id="roleFarmer"  onclick="setRole('farmer',  this)">Farmer</button>
-          </div>
-        </div>
-
         <button class="btn-login" onclick="login()">Sign In →</button>
 
         <p class="login-msg" id="msg"></p>
 
         <div class="login-hint">
-          <span>Demo credentials:</span>
-          <code>admin / 1234</code>
+          <span>Don't have an account?</span>
+          <a href="register.html" style="color:var(--accent); margin-left:6px;">Create one →</a>
         </div>
       </div>
     </div>
@@ -77,10 +68,9 @@
   </div>
 
 <footer class="footer">
-  © 2026 IoT Movers System &nbsp;|&nbsp; Real-time Fleet Tracking &nbsp;|&nbsp; Nakuru · Nairobi · Meru
+  © 2026 IoT Movers System &nbsp;|&nbsp; Real-time Fleet Tracking
 </footer>
 
 <script src="js/login.js"></script>
-
 </body>
 </html>
