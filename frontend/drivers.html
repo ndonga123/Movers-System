@@ -44,8 +44,8 @@
       <a class="nav-item" href="reports.html">
         <span class="nav-ico">📊</span> Reports
       </a>
-      <a class="nav-item" href="dashboard.html">
-        <span class="nav-ico">🔔</span> Alerts
+      <a class="nav-item" href="deliveries.html">
+        <span class="nav-ico">📦</span> Deliveries
       </a>
     </nav>
 
@@ -58,23 +58,22 @@
         </div>
       </div>
       <button class="theme-btn" onclick="toggleDark()">🌙 Toggle Theme</button>
-      <a class="logout-link" href="login.html">↩ Logout</a>
+      <a class="logout-link" href="login.html" onclick="localStorage.clear()">↩ Logout</a>
     </div>
   </aside>
 
   <!-- MAIN -->
   <main>
 
-    <!-- Header -->
     <div class="page-header">
       <div class="page-title">
         <h1>Fleet Drivers</h1>
         <p class="sub">/ Manage all registered drivers</p>
       </div>
-      <button class="btn-add" onclick="openModal()">+ Add Driver</button>
+      <!-- hidden for driver/farmer by role-guard -->
+      <button class="btn-add" onclick="openModal()" data-role="admin,transporter">+ Add Driver</button>
     </div>
 
-    <!-- Stats -->
     <div class="v-stats">
       <div class="card stat-card">
         <span class="stat-ico">👤</span>
@@ -93,7 +92,6 @@
       </div>
     </div>
 
-    <!-- Drivers Table -->
     <div class="card big vehicles-table-wrap">
       <div class="card-header">
         <h3>Registered Drivers</h3>
@@ -106,7 +104,7 @@
             <th>Name</th>
             <th>Phone</th>
             <th>Assigned Vehicle</th>
-            <th>Actions</th>
+            <th data-role="admin,transporter">Actions</th>
           </tr>
         </thead>
         <tbody id="driverList"></tbody>
@@ -151,14 +149,13 @@
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script src="js/drivers.js"></script>
+<script src="js/role-guard.js"></script>
 
 <footer class="footer">
   © 2026 IoT Movers System &nbsp;|&nbsp; Real-time Fleet Tracking
 </footer>
-
 </body>
 </html>

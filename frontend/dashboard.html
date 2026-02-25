@@ -14,7 +14,6 @@
 <body>
 <div class="layout">
 
-  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="brand-icon">🌿</div>
@@ -37,6 +36,7 @@
       <a class="nav-item" href="sensors.html"><span class="nav-ico">📡</span> Sensors</a>
       <span class="nav-section">Insights</span>
       <a class="nav-item" href="reports.html"><span class="nav-ico">📊</span> Reports</a>
+      <a class="nav-item" href="deliveries.html"><span class="nav-ico">📦</span> Deliveries</a>
       <a class="nav-item" href="#" id="notifyBtn"><span class="nav-ico">🔔</span> Alerts</a>
     </nav>
 
@@ -49,14 +49,11 @@
         </div>
       </div>
       <button class="theme-btn" onclick="toggleDark()">🌙 Toggle Theme</button>
-      <a class="logout-link" href="login.html">↩ Logout</a>
+      <a class="logout-link" href="login.html" onclick="localStorage.clear()">↩ Logout</a>
     </div>
   </aside>
 
-  <!-- MAIN -->
   <main>
-
-    <!-- Header -->
     <div class="page-header">
       <div class="page-title">
         <h1>Dashboard</h1>
@@ -68,10 +65,8 @@
       </div>
     </div>
 
-    <!-- Notifications panel — toggled by notifyBtn in dashboard.js -->
     <div id="notifications" class="notifications-panel" style="display:none"></div>
 
-    <!-- Stat Cards — IDs must match dashboard.js exactly -->
     <div class="cards">
       <div class="card stat-card">
         <span class="stat-ico">📍</span>
@@ -95,10 +90,7 @@
       </div>
     </div>
 
-    <!-- Chart + Vehicle List -->
     <div class="dash-grid">
-
-      <!-- Sensor Chart — id="sensorChart" used by dashboard.js -->
       <div class="card big">
         <div class="card-header">
           <h3>Live Sensor Readings</h3>
@@ -109,7 +101,6 @@
         </div>
       </div>
 
-      <!-- Vehicle List — id="vehicleList" used by dashboard.js -->
       <div class="card">
         <div class="card-header">
           <h3>Fleet Vehicles</h3>
@@ -117,10 +108,8 @@
         </div>
         <div id="vehicleList" class="vehicle-list"></div>
       </div>
-
     </div>
 
-    <!-- Map — id="map" used by dashboard.js -->
     <div class="card big">
       <div class="card-header">
         <h3>Live Route Map</h3>
@@ -128,16 +117,14 @@
       </div>
       <div id="map"></div>
     </div>
-
   </main>
 </div>
 
-<!-- Required by dashboard.js for compatibility -->
 <div id="alerts" style="display:none"></div>
 
 <script src="js/dashboard.js"></script>
+<script src="js/role-guard.js"></script>
 <script>
-  // Live clock
   function updateClock() {
     const el = document.getElementById("liveTime");
     if (el) el.textContent = new Date().toLocaleTimeString();
@@ -145,38 +132,14 @@
   setInterval(updateClock, 1000);
   updateClock();
 
-  // Role switcher
   function switchRole(role, btn) {
     document.querySelectorAll(".role-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    const avatar = document.getElementById("userAvatar");
-    const label  = document.getElementById("userRoleLabel");
-    if (role === "farmer") {
-      avatar.textContent = "F";
-      avatar.style.background = "#f5c842";
-      avatar.style.color = "#111";
-      label.textContent = "Farmer";
-    } else {
-      avatar.textContent = "T";
-      avatar.style.background = "#3ddc6e";
-      avatar.style.color = "#111";
-      label.textContent = "Transporter";
-    }
   }
-
-  // Update active vehicles count after dashboard.js loads vehicles
-  document.addEventListener("DOMContentLoaded", () => {
-    setTimeout(() => {
-      const cards = document.querySelectorAll(".vehicle-card");
-      const el = document.getElementById("activeVehicles");
-      if (el) el.textContent = cards.length || "--";
-    }, 2500);
-  });
 </script>
 
 <footer class="footer">
   © 2026 IoT Movers System &nbsp;|&nbsp; Real-time Fleet Tracking
 </footer>
-
 </body>
 </html>

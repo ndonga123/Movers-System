@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Vehicles — IoT Movers</title>
+  <title>Deliveries — IoT Movers</title>
   <link rel="stylesheet" href="css/styles.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 </head>
@@ -31,7 +31,7 @@
       <a class="nav-item" href="dashboard.html">
         <span class="nav-ico">⬡</span> Dashboard
       </a>
-      <a class="nav-item active" href="vehicles.html">
+      <a class="nav-item" href="vehicles.html">
         <span class="nav-ico">🚛</span> Vehicles
       </a>
       <a class="nav-item" href="drivers.html">
@@ -44,7 +44,7 @@
       <a class="nav-item" href="reports.html">
         <span class="nav-ico">📊</span> Reports
       </a>
-      <a class="nav-item" href="deliveries.html">
+      <a class="nav-item active" href="deliveries.html">
         <span class="nav-ico">📦</span> Deliveries
       </a>
     </nav>
@@ -67,52 +67,52 @@
 
     <div class="page-header">
       <div class="page-title">
-        <h1>Fleet Vehicles</h1>
-        <p class="sub">/ Manage and monitor all registered vehicles</p>
+        <h1>Deliveries</h1>
+        <p class="sub">/ Track all active and completed deliveries</p>
       </div>
-      <!-- hidden for driver/farmer by role-guard -->
-      <button class="btn-add" onclick="openModal()" data-role="admin,transporter">+ Add Vehicle</button>
+      <button class="btn-add" onclick="openModal()" data-role="admin,transporter">+ Add Delivery</button>
     </div>
 
     <div class="v-stats">
       <div class="card stat-card">
-        <span class="stat-ico">🚛</span>
-        <div class="stat-label">Total Vehicles</div>
+        <span class="stat-ico">📦</span>
+        <div class="stat-label">Total Deliveries</div>
         <div class="stat-val green" id="statTotal">0</div>
       </div>
       <div class="card stat-card">
-        <span class="stat-ico">📍</span>
-        <div class="stat-label">Active Routes</div>
-        <div class="stat-val" id="statRoutes">0</div>
+        <span class="stat-ico">🚚</span>
+        <div class="stat-label">In Transit</div>
+        <div class="stat-val" id="statTransit">0</div>
       </div>
       <div class="card stat-card">
-        <span class="stat-ico">🛡</span>
-        <div class="stat-label">Admin Access</div>
-        <div class="stat-val green">✓ Enabled</div>
+        <span class="stat-ico">✅</span>
+        <div class="stat-label">Delivered</div>
+        <div class="stat-val green" id="statDelivered">0</div>
       </div>
     </div>
 
     <div class="card big vehicles-table-wrap">
       <div class="card-header">
-        <h3>Registered Vehicles</h3>
-        <span class="card-tag" id="vehicleCountTag">0 VEHICLES</span>
+        <h3>All Deliveries</h3>
+        <span class="card-tag" id="deliveryCountTag">0 DELIVERIES</span>
       </div>
 
-      <table id="vehicleTable">
+      <table id="deliveryTable">
         <thead>
           <tr>
-            <th>Vehicle Name</th>
+            <th>Vehicle</th>
+            <th>Driver</th>
             <th>Route</th>
             <th>Status</th>
             <th data-role="admin,transporter">Actions</th>
           </tr>
         </thead>
-        <tbody id="vehicleList"></tbody>
+        <tbody id="deliveryList"></tbody>
       </table>
 
       <div class="empty-state" id="emptyState" style="display:none">
-        <div class="empty-icon">🚛</div>
-        <p>No vehicles registered yet.<br/>Click "+ Add Vehicle" to get started.</p>
+        <div class="empty-icon">📦</div>
+        <p>No deliveries yet.<br/>Click "+ Add Delivery" to get started.</p>
       </div>
     </div>
 
@@ -123,34 +123,43 @@
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">✕</button>
-    <div class="modal-title" id="modalTitle">Add Vehicle</div>
-    <div class="modal-sub" id="modalSub">Enter vehicle name and city names — route generated automatically</div>
+    <div class="modal-title" id="modalTitle">Add Delivery</div>
+    <div class="modal-sub" id="modalSub">Register a new delivery</div>
 
-    <form class="vehicle-form" id="vehicleForm" onsubmit="handleSubmit(event)">
+    <form class="vehicle-form" id="deliveryForm" onsubmit="handleSubmit(event)">
       <input type="hidden" id="editId"/>
 
       <div class="form-group">
-        <label>Vehicle Name / Plate</label>
-        <input type="text" id="name" placeholder="e.g. KDV 405 S" required/>
+        <label>Vehicle (Plate)</label>
+        <input type="text" id="dvehicle" placeholder="e.g. KDV 405 S" required/>
+      </div>
+
+      <div class="form-group">
+        <label>Driver Name</label>
+        <input type="text" id="ddriver" placeholder="e.g. James Mwangi" required/>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label>From (City)</label>
-          <input type="text" id="from" placeholder="e.g. Nairobi" required/>
+          <label>From</label>
+          <input type="text" id="dfrom" placeholder="e.g. Nairobi" required/>
         </div>
         <div class="form-group">
-          <label>To (City)</label>
-          <input type="text" id="to" placeholder="e.g. Nakuru" required/>
+          <label>To</label>
+          <input type="text" id="dto" placeholder="e.g. Nakuru" required/>
         </div>
       </div>
 
-      <div class="route-status" id="routeStatus" style="display:none">
-        <span class="pulse-dot"></span>
-        <span id="routeStatusMsg">Generating route...</span>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="dstatus" class="form-select">
+          <option value="Pending">Pending</option>
+          <option value="In Transit">In Transit</option>
+          <option value="Delivered">Delivered</option>
+        </select>
       </div>
 
-      <button type="submit" class="btn-submit" id="submitBtn">Add Vehicle</button>
+      <button type="submit" class="btn-submit" id="submitBtn">Add Delivery</button>
     </form>
   </div>
 </div>
@@ -158,7 +167,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  const API = "https://movers-system.onrender.com/api/vehicles";
+  const API = "https://movers-system.onrender.com/api/deliveries";
   let editingId = null;
 
   function authHeaders() {
@@ -168,19 +177,20 @@
     };
   }
 
-  async function loadVehicles() {
+  async function loadDeliveries() {
     try {
-      const res      = await fetch(API);
-      const vehicles = await res.json();
-      const tbody    = document.getElementById("vehicleList");
-      const empty    = document.getElementById("emptyState");
-      const table    = document.getElementById("vehicleTable");
+      const res        = await fetch(API);
+      const deliveries = await res.json();
+      const tbody      = document.getElementById("deliveryList");
+      const empty      = document.getElementById("emptyState");
+      const table      = document.getElementById("deliveryTable");
 
-      document.getElementById("statTotal").textContent       = vehicles.length;
-      document.getElementById("statRoutes").textContent      = vehicles.filter(v => v.from && v.to).length;
-      document.getElementById("vehicleCountTag").textContent = vehicles.length + " VEHICLES";
+      document.getElementById("statTotal").textContent       = deliveries.length;
+      document.getElementById("statTransit").textContent     = deliveries.filter(d => d.status === "In Transit").length;
+      document.getElementById("statDelivered").textContent   = deliveries.filter(d => d.status === "Delivered").length;
+      document.getElementById("deliveryCountTag").textContent = deliveries.length + " DELIVERIES";
 
-      if (vehicles.length === 0) {
+      if (deliveries.length === 0) {
         table.style.display = "none";
         empty.style.display = "block";
         return;
@@ -193,26 +203,29 @@
       const role      = localStorage.getItem("role") || "farmer";
       const canManage = ["admin", "transporter"].includes(role);
 
-      vehicles.forEach(v => {
-        const hasRoute = v.route && v.route.length > 1;
+      deliveries.forEach(d => {
+        const statusClass = d.status === "Delivered" ? "status-transit"
+                          : d.status === "In Transit" ? "status-active"
+                          : "status-pending";
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td class="td-plate">🚛 ${v.name || "—"}</td>
-          <td class="td-route">${v.from || "—"} → ${v.to || "—"}</td>
+          <td class="td-plate">🚛 ${d.vehicle || "—"}</td>
+          <td>👤 ${d.driver || "—"}</td>
+          <td class="td-route">${d.from || "—"} → ${d.to || "—"}</td>
           <td>
-            <span class="status-badge ${hasRoute ? "status-transit" : "status-pending"}">
-              ${hasRoute ? "ROUTE SET" : "NO ROUTE"}
+            <span class="status-badge ${statusClass}">
+              ${d.status || "Pending"}
             </span>
           </td>
           <td>
             ${canManage ? `
             <div class="td-actions">
               <button class="btn-edit"
-                onclick="openEditModal('${v._id}','${v.name}','${v.from||""}','${v.to||""}')">
+                onclick="openEditModal('${d._id}','${d.vehicle||""}','${d.driver||""}','${d.from||""}','${d.to||""}','${d.status||"Pending"}')">
                 ✏ Edit
               </button>
               <button class="btn-delete"
-                onclick="deleteVehicle('${v._id}','${v.name}')">
+                onclick="deleteDelivery('${d._id}')">
                 🗑 Delete
               </button>
             </div>` : `<span class="status-badge status-pending">View Only</span>`}
@@ -221,31 +234,31 @@
       });
 
     } catch (err) {
-      showToast("Failed to load vehicles", true);
+      showToast("Failed to load deliveries", true);
     }
   }
 
   function openModal() {
     editingId = null;
-    document.getElementById("vehicleForm").reset();
+    document.getElementById("deliveryForm").reset();
     document.getElementById("editId").value           = "";
-    document.getElementById("modalTitle").textContent = "Add Vehicle";
-    document.getElementById("modalSub").textContent   = "Enter vehicle name and city names — route generated automatically";
-    document.getElementById("submitBtn").textContent  = "Add Vehicle";
-    hideRouteStatus();
+    document.getElementById("modalTitle").textContent = "Add Delivery";
+    document.getElementById("modalSub").textContent   = "Register a new delivery";
+    document.getElementById("submitBtn").textContent  = "Add Delivery";
     document.getElementById("modalOverlay").classList.add("open");
   }
 
-  function openEditModal(id, name, from, to) {
+  function openEditModal(id, vehicle, driver, from, to, status) {
     editingId = id;
-    document.getElementById("editId").value           = id;
-    document.getElementById("name").value             = name;
-    document.getElementById("from").value             = from;
-    document.getElementById("to").value               = to;
-    document.getElementById("modalTitle").textContent = "Edit Vehicle";
-    document.getElementById("modalSub").textContent   = "Update vehicle details";
+    document.getElementById("editId").value    = id;
+    document.getElementById("dvehicle").value  = vehicle;
+    document.getElementById("ddriver").value   = driver;
+    document.getElementById("dfrom").value     = from;
+    document.getElementById("dto").value       = to;
+    document.getElementById("dstatus").value   = status;
+    document.getElementById("modalTitle").textContent = "Edit Delivery";
+    document.getElementById("modalSub").textContent   = "Update delivery details";
     document.getElementById("submitBtn").textContent  = "Save Changes";
-    hideRouteStatus();
     document.getElementById("modalOverlay").classList.add("open");
   }
 
@@ -258,67 +271,54 @@
     if (e.target === this) closeModal();
   });
 
-  function showRouteStatus(msg) {
-    const el    = document.getElementById("routeStatus");
-    const msgEl = document.getElementById("routeStatusMsg");
-    if (el)    el.style.display   = "flex";
-    if (msgEl) msgEl.textContent  = msg;
-  }
-
-  function hideRouteStatus() {
-    const el = document.getElementById("routeStatus");
-    if (el) el.style.display = "none";
-  }
-
   async function handleSubmit(e) {
     e.preventDefault();
     const data = {
-      name: document.getElementById("name").value.trim(),
-      from: document.getElementById("from").value.trim(),
-      to:   document.getElementById("to").value.trim()
+      vehicle: document.getElementById("dvehicle").value.trim(),
+      driver:  document.getElementById("ddriver").value.trim(),
+      from:    document.getElementById("dfrom").value.trim(),
+      to:      document.getElementById("dto").value.trim(),
+      status:  document.getElementById("dstatus").value
     };
 
     const btn = document.getElementById("submitBtn");
     btn.disabled = true;
+    btn.textContent = "Saving...";
 
     try {
       if (editingId) {
-        btn.textContent = "Saving...";
         await fetch(`${API}/${editingId}`, {
           method:  "PUT",
           headers: authHeaders(),
           body:    JSON.stringify(data)
         });
-        showToast("✓ Vehicle updated");
+        showToast("✓ Delivery updated");
       } else {
-        btn.textContent = "Generating route...";
-        showRouteStatus("Geocoding cities and generating road route...");
         await fetch(API, {
           method:  "POST",
           headers: authHeaders(),
           body:    JSON.stringify(data)
         });
-        showToast("✓ Vehicle added with route");
+        showToast("✓ Delivery added");
       }
       closeModal();
-      loadVehicles();
+      loadDeliveries();
     } catch (err) {
-      showToast("Error saving vehicle — check city names", true);
-      hideRouteStatus();
+      showToast("Error saving delivery", true);
     } finally {
       btn.disabled    = false;
-      btn.textContent = editingId ? "Save Changes" : "Add Vehicle";
+      btn.textContent = editingId ? "Save Changes" : "Add Delivery";
     }
   }
 
-  async function deleteVehicle(id, name) {
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+  async function deleteDelivery(id) {
+    if (!confirm("Delete this delivery? This cannot be undone.")) return;
     try {
       await fetch(`${API}/${id}`, { method: "DELETE", headers: authHeaders() });
-      showToast("✓ Vehicle deleted");
-      loadVehicles();
+      showToast("✓ Delivery deleted");
+      loadDeliveries();
     } catch (err) {
-      showToast("Error deleting vehicle", true);
+      showToast("Error deleting delivery", true);
     }
   }
 
@@ -350,7 +350,7 @@
     }
   }
 
-  loadVehicles();
+  loadDeliveries();
 </script>
 
 <script src="js/role-guard.js"></script>
