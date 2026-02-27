@@ -6,6 +6,14 @@
 const API = "https://movers-system.onrender.com/api/drivers";
 let editingId = null;
 
+// ── AUTH HEADERS ──
+function authHeaders() {
+  return {
+    "Content-Type": "application/json",
+    "x-auth-token": localStorage.getItem("token") || ""
+  };
+}
+
 // ── LOAD DRIVERS ──
 async function loadDrivers() {
   try {
@@ -17,7 +25,6 @@ async function loadDrivers() {
     const table  = document.getElementById("driverTable");
     const tag    = document.getElementById("driverCountTag");
 
-    // Stats
     const assigned   = drivers.filter(d => d.vehicleID).length;
     const unassigned = drivers.length - assigned;
 
@@ -43,6 +50,9 @@ async function loadDrivers() {
 
     tbody.innerHTML = "";
 
+    const role      = localStorage.getItem("role") || "farmer";
+    const canManage = ["admin", "transporter"].includes(role);
+
     drivers.forEach(d => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
@@ -55,6 +65,7 @@ async function loadDrivers() {
           }
         </td>
         <td>
+          ${canManage ? `
           <div class="td-actions">
             <button class="btn-edit"
               onclick="openEditModal('${d._id}','${d.name}','${d.phoneNumber}','${d.vehicleID||""}')">
@@ -64,7 +75,7 @@ async function loadDrivers() {
               onclick="deleteDriver('${d._id}','${d.name}')">
               🗑 Delete
             </button>
-          </div>
+          </div>` : `<span class="status-badge status-pending">View Only</span>`}
         </td>`;
       tbody.appendChild(tr);
     });
@@ -105,12 +116,11 @@ function closeModal() {
   editingId = null;
 }
 
-// Close on overlay click
 document.getElementById("modalOverlay").addEventListener("click", function(e) {
   if (e.target === this) closeModal();
 });
 
-// ── HANDLE SUBMIT (ADD or EDIT) ──
+// ── HANDLE SUBMIT ──
 async function handleSubmit(e) {
   e.preventDefault();
 
@@ -128,14 +138,14 @@ async function handleSubmit(e) {
     if (editingId) {
       await fetch(`${API}/${editingId}`, {
         method:  "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(),
         body:    JSON.stringify(data)
       });
       showToast("✓ Driver updated");
     } else {
       await fetch(API, {
         method:  "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(),
         body:    JSON.stringify(data)
       });
       showToast("✓ Driver added");
@@ -157,7 +167,7 @@ async function handleSubmit(e) {
 async function deleteDriver(id, name) {
   if (!confirm(`Delete driver "${name}"? This cannot be undone.`)) return;
   try {
-    await fetch(`${API}/${id}`, { method: "DELETE" });
+    await fetch(`${API}/${id}`, { method: "DELETE", headers: authHeaders() });
     showToast("✓ Driver deleted");
     loadDrivers();
   } catch (err) {
@@ -176,9 +186,7 @@ function showToast(msg, isError = false) {
 }
 
 // ── DARK MODE ──
-function toggleDark() {
-  document.body.classList.toggle("dark");
-}
+function toggleDark() { document.body.classList.toggle("dark"); }
 
 // ── ROLE SWITCHER ──
 function switchRole(role, btn) {
