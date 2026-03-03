@@ -2,7 +2,7 @@ const express               = require("express");
 const router                = express.Router();
 const Vehicle               = require("../models/Vehicle");
 const { buildRoute }        = require("../utils/routeService");
-const { auth, requireRole } = require("../middleware/auth");
+const { auth, requireRole } = require("../auth");
 
 // GET all vehicles — public
 router.get("/", async (req, res) => {
