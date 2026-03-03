@@ -6,6 +6,7 @@
   <title>Deliveries — IoT Movers</title>
   <link rel="stylesheet" href="css/styles.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -80,6 +81,17 @@
       </div>
     </div>
 
+    <!-- Delivery Status Chart -->
+    <div class="card big">
+      <div class="card-header">
+        <h3>Delivery Status Overview</h3>
+        <span class="card-tag live">LIVE</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="deliveryChart"></canvas>
+      </div>
+    </div>
+
     <div class="card big vehicles-table-wrap">
       <div class="card-header">
         <h3>All Deliveries</h3>
@@ -118,7 +130,6 @@
     <form class="vehicle-form" id="deliveryForm" onsubmit="handleSubmit(event)">
       <input type="hidden" id="editId"/>
 
-      <!-- Vehicle dropdown — fetched from /api/vehicles -->
       <div class="form-group">
         <label>Vehicle</label>
         <select id="dvehicle" class="form-select" onchange="onVehicleChange()" required>
@@ -126,7 +137,6 @@
         </select>
       </div>
 
-      <!-- Route auto-filled from selected vehicle -->
       <div class="form-row">
         <div class="form-group">
           <label>From</label>
@@ -140,7 +150,6 @@
         </div>
       </div>
 
-      <!-- Driver dropdown — fetched from /api/drivers -->
       <div class="form-group">
         <label>Driver</label>
         <select id="ddriver" class="form-select" required>
@@ -169,9 +178,8 @@
   const VEHICLES_API = "https://movers-system.onrender.com/api/vehicles";
   const DRIVERS_API  = "https://movers-system.onrender.com/api/drivers";
 
-  let editingId = null;
-  let vehiclesCache = [];
-  let driversCache  = [];
+  let editingId     = null;
+  let deliveryChart = null;
 
   function authHeaders() {
     return {
@@ -180,56 +188,91 @@
     };
   }
 
-  // ── POPULATE DROPDOWNS FROM DB ──
+  // ── DELIVERY STATUS CHART ──
+  function updateChart(pending, inTransit, delivered) {
+    const ctx = document.getElementById("deliveryChart").getContext("2d");
+    if (deliveryChart) deliveryChart.destroy();
+
+    deliveryChart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: ["Pending", "In Transit", "Delivered"],
+        datasets: [{
+          label: "Deliveries",
+          data: [pending, inTransit, delivered],
+          backgroundColor: [
+            "rgba(245,200,66,0.7)",
+            "rgba(91,200,245,0.7)",
+            "rgba(61,220,110,0.7)"
+          ],
+          borderRadius: 6,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: { color: "#5a7a5f", font: { family: "Space Mono", size: 10 } }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: "#5a7a5f", font: { family: "Space Mono", size: 10 } },
+            grid:  { color: "#1e3022" }
+          },
+          y: {
+            ticks: { color: "#5a7a5f", font: { family: "Space Mono", size: 10 }, stepSize: 1 },
+            grid:  { color: "#1e3022" }
+          }
+        }
+      }
+    });
+  }
+
+  // ── POPULATE DROPDOWNS ──
   async function loadDropdowns() {
     try {
-      const [vRes, dRes] = await Promise.all([
-        fetch(VEHICLES_API),
-        fetch(DRIVERS_API)
-      ]);
-      vehiclesCache = await vRes.json();
-      driversCache  = await dRes.json();
+      const [vRes, dRes] = await Promise.all([fetch(VEHICLES_API), fetch(DRIVERS_API)]);
+      const vehicles = await vRes.json();
+      const drivers  = await dRes.json();
 
       const vSel = document.getElementById("dvehicle");
       const dSel = document.getElementById("ddriver");
 
-      // Clear and repopulate vehicles
       vSel.innerHTML = '<option value="">— Select Vehicle —</option>';
-      vehiclesCache.forEach(v => {
+      vehicles.forEach(v => {
         const opt = document.createElement("option");
-        opt.value       = v.name;
-        opt.textContent = `${v.name} (${v.from || "?"} → ${v.to || "?"})`;
+        opt.value        = v.name;
+        opt.textContent  = `${v.name} (${v.from || "?"} → ${v.to || "?"})`;
         opt.dataset.from = v.from || "";
         opt.dataset.to   = v.to   || "";
         vSel.appendChild(opt);
       });
 
-      // Clear and repopulate drivers
       dSel.innerHTML = '<option value="">— Select Driver —</option>';
-      driversCache.forEach(d => {
+      drivers.forEach(d => {
         const opt = document.createElement("option");
         opt.value       = d.name;
-        opt.textContent = d.vehicleID
-          ? `${d.name} (${d.vehicleID})`
-          : d.name;
+        opt.textContent = d.vehicleID ? `${d.name} (${d.vehicleID})` : d.name;
         dSel.appendChild(opt);
       });
 
     } catch (err) {
-      console.error("Failed to load dropdowns:", err);
       showToast("Failed to load vehicles/drivers", true);
     }
   }
 
-  // ── AUTO-FILL ROUTE WHEN VEHICLE SELECTED ──
+  // ── AUTO-FILL ROUTE ──
   function onVehicleChange() {
-    const sel = document.getElementById("dvehicle");
+    const sel      = document.getElementById("dvehicle");
     const selected = sel.options[sel.selectedIndex];
     document.getElementById("dfrom").value = selected.dataset.from || "";
     document.getElementById("dto").value   = selected.dataset.to   || "";
   }
 
-  // ── LOAD DELIVERIES TABLE ──
+  // ── LOAD DELIVERIES ──
   async function loadDeliveries() {
     try {
       const res        = await fetch(API);
@@ -238,12 +281,20 @@
       const empty      = document.getElementById("emptyState");
       const table      = document.getElementById("deliveryTable");
 
-      document.getElementById("statTotal").textContent        = deliveries.length;
-      document.getElementById("statTransit").textContent      = deliveries.filter(d => d.status === "In Transit").length;
-      document.getElementById("statDelivered").textContent    = deliveries.filter(d => d.status === "Delivered").length;
-      document.getElementById("deliveryCountTag").textContent = deliveries.length + " DELIVERIES";
+      const total     = deliveries.length;
+      const inTransit = deliveries.filter(d => d.status === "In Transit").length;
+      const delivered = deliveries.filter(d => d.status === "Delivered").length;
+      const pending   = deliveries.filter(d => d.status === "Pending").length;
 
-      if (deliveries.length === 0) {
+      document.getElementById("statTotal").textContent        = total;
+      document.getElementById("statTransit").textContent      = inTransit;
+      document.getElementById("statDelivered").textContent    = delivered;
+      document.getElementById("deliveryCountTag").textContent = total + " DELIVERIES";
+
+      // Update chart with real data
+      updateChart(pending, inTransit, delivered);
+
+      if (total === 0) {
         table.style.display = "none";
         empty.style.display = "block";
         return;
@@ -349,16 +400,12 @@
     try {
       if (editingId) {
         await fetch(`${API}/${editingId}`, {
-          method:  "PUT",
-          headers: authHeaders(),
-          body:    JSON.stringify(data)
+          method: "PUT", headers: authHeaders(), body: JSON.stringify(data)
         });
         showToast("✓ Delivery updated");
       } else {
         await fetch(API, {
-          method:  "POST",
-          headers: authHeaders(),
-          body:    JSON.stringify(data)
+          method: "POST", headers: authHeaders(), body: JSON.stringify(data)
         });
         showToast("✓ Delivery added");
       }

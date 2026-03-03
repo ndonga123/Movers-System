@@ -3,10 +3,10 @@
    IoT Movers System
    ============================================ */
 
-const API_REPORTS   = "https://movers-system.onrender.com/api/reports";
+const API_REPORTS    = "https://movers-system.onrender.com/api/reports";
 const API_DELIVERIES = "https://movers-system.onrender.com/api/deliveries";
-const API_VEHICLES  = "https://movers-system.onrender.com/api/vehicles";
-const API_DRIVERS   = "https://movers-system.onrender.com/api/drivers";
+const API_VEHICLES   = "https://movers-system.onrender.com/api/vehicles";
+const API_DRIVERS    = "https://movers-system.onrender.com/api/drivers";
 
 function authHeaders() {
   return {
@@ -26,34 +26,27 @@ async function loadStats() {
     const delivered = deliveries.filter(d => d.status === "Delivered").length;
     const pending   = deliveries.filter(d => d.status === "Pending").length;
 
-    // Total deliveries
     document.getElementById("statCompleted").textContent          = total;
     document.getElementById("progressCompleted").style.width      = "100%";
     document.getElementById("progressCompletedLabel").textContent = `${delivered} delivered · ${pending} pending`;
 
-    // In transit
     const transitPct = total > 0 ? Math.round((inTransit / total) * 100) : 0;
     document.getElementById("statOnTime").textContent          = inTransit;
     document.getElementById("progressOnTime").style.width      = transitPct + "%";
     document.getElementById("progressOnTimeLabel").textContent = `${transitPct}% of total deliveries`;
 
-    // Delivered
     const deliveredPct = total > 0 ? Math.round((delivered / total) * 100) : 0;
-    document.getElementById("statAvgTime").textContent        = delivered;
-    document.getElementById("progressAvgTime").style.width    = deliveredPct + "%";
+    document.getElementById("statAvgTime").textContent     = delivered;
+    document.getElementById("progressAvgTime").style.width = deliveredPct + "%";
 
-    // Open incidents — loaded separately from reports
     loadOpenIncidents();
-
-    // Update weekly chart with real data
-    updateWeeklyChart(pending, inTransit, delivered);
 
   } catch (err) {
     console.error("Stats load failed:", err);
   }
 }
 
-// ── OPEN INCIDENTS COUNT FROM REPORTS ──
+// ── OPEN INCIDENTS COUNT ──
 async function loadOpenIncidents() {
   try {
     const res     = await fetch(API_REPORTS);
@@ -70,13 +63,10 @@ async function loadOpenIncidents() {
   }
 }
 
-// ── POPULATE VEHICLE AND DRIVER DROPDOWNS ──
+// ── POPULATE DROPDOWNS ──
 async function loadDropdowns() {
   try {
-    const [vRes, dRes] = await Promise.all([
-      fetch(API_VEHICLES),
-      fetch(API_DRIVERS)
-    ]);
+    const [vRes, dRes] = await Promise.all([fetch(API_VEHICLES), fetch(API_DRIVERS)]);
     const vehicles = await vRes.json();
     const drivers  = await dRes.json();
 
@@ -100,54 +90,8 @@ async function loadDropdowns() {
     });
 
   } catch (err) {
-    console.error("Dropdowns failed:", err);
     showToast("Failed to load vehicles/drivers", true);
   }
-}
-
-// ── WEEKLY CHART — from real delivery statuses ──
-let weeklyChart;
-
-function updateWeeklyChart(pending, inTransit, delivered) {
-  const ctx = document.getElementById("weeklyChart").getContext("2d");
-  if (weeklyChart) weeklyChart.destroy();
-
-  weeklyChart = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: ["Pending", "In Transit", "Delivered"],
-      datasets: [{
-        label: "Deliveries",
-        data: [pending, inTransit, delivered],
-        backgroundColor: [
-          "rgba(245,200,66,0.7)",
-          "rgba(91,200,245,0.7)",
-          "rgba(61,220,110,0.7)"
-        ],
-        borderRadius: 6,
-        borderSkipped: false
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          labels: { color: "#5a7a5f", font: { family: "Space Mono", size: 10 } }
-        }
-      },
-      scales: {
-        x: {
-          ticks: { color: "#5a7a5f", font: { family: "Space Mono", size: 10 } },
-          grid:  { color: "#1e3022" }
-        },
-        y: {
-          ticks: { color: "#5a7a5f", font: { family: "Space Mono", size: 10 }, stepSize: 1 },
-          grid:  { color: "#1e3022" }
-        }
-      }
-    }
-  });
 }
 
 // ── INCIDENT PIE CHART ──
@@ -238,7 +182,6 @@ async function loadReports() {
     updateIncidentChart(open, inProgress, resolved);
 
   } catch (err) {
-    console.error("Reports load failed:", err);
     showToast("Failed to load reports", true);
   }
 }
@@ -253,7 +196,6 @@ function statusClass(status) {
 // ── SUBMIT REPORT ──
 async function submitReport(e) {
   e.preventDefault();
-
   const data = {
     vehicle: document.getElementById("rvehicle").value,
     driver:  document.getElementById("rdriver").value,
@@ -268,9 +210,7 @@ async function submitReport(e) {
 
   try {
     await fetch(API_REPORTS, {
-      method:  "POST",
-      headers: authHeaders(),
-      body:    JSON.stringify(data)
+      method: "POST", headers: authHeaders(), body: JSON.stringify(data)
     });
     document.getElementById("reportForm").reset();
     showToast("✓ Report submitted");
@@ -284,23 +224,21 @@ async function submitReport(e) {
   }
 }
 
-// ── RESOLVE REPORT ──
+// ── RESOLVE ──
 async function resolveReport(id) {
   try {
     await fetch(`${API_REPORTS}/${id}`, {
-      method:  "PUT",
-      headers: authHeaders(),
-      body:    JSON.stringify({ status: "Resolved" })
+      method: "PUT", headers: authHeaders(), body: JSON.stringify({ status: "Resolved" })
     });
     showToast("✓ Report resolved");
     loadReports();
     loadStats();
   } catch (err) {
-    showToast("Failed to resolve report", true);
+    showToast("Failed to resolve", true);
   }
 }
 
-// ── DELETE REPORT ──
+// ── DELETE ──
 async function deleteReport(id) {
   if (!confirm("Delete this report?")) return;
   try {
@@ -309,7 +247,7 @@ async function deleteReport(id) {
     loadReports();
     loadStats();
   } catch (err) {
-    showToast("Failed to delete report", true);
+    showToast("Failed to delete", true);
   }
 }
 

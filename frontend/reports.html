@@ -114,29 +114,6 @@
       </div>
     </div>
 
-    <!-- Charts Row -->
-    <div class="reports-grid">
-      <div class="card big">
-        <div class="card-header">
-          <h3>Delivery Status Overview</h3>
-          <span class="card-tag live">LIVE</span>
-        </div>
-        <div class="chart-wrap">
-          <canvas id="weeklyChart"></canvas>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <h3>Incident Breakdown</h3>
-          <span class="card-tag" id="incidentCountTag">0 TOTAL</span>
-        </div>
-        <div class="chart-wrap-sm">
-          <canvas id="incidentChart"></canvas>
-        </div>
-      </div>
-    </div>
-
     <!-- Incident Reports Table + Form -->
     <div class="reports-grid">
 
@@ -166,45 +143,58 @@
         </div>
       </div>
 
-      <!-- Create Report Form -->
-      <div class="card">
-        <div class="card-header">
-          <h3>Create Report</h3>
+      <!-- Create Report Form + Incident Chart -->
+      <div style="display:flex; flex-direction:column; gap:20px;">
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Incident Breakdown</h3>
+            <span class="card-tag" id="incidentCountTag">0 TOTAL</span>
+          </div>
+          <div class="chart-wrap-sm">
+            <canvas id="incidentChart"></canvas>
+          </div>
         </div>
-        <form class="report-form" id="reportForm" onsubmit="submitReport(event)">
 
-          <div class="form-group">
-            <label>Vehicle</label>
-            <select id="rvehicle" class="form-select" required>
-              <option value="">— Select Vehicle —</option>
-            </select>
+        <div class="card">
+          <div class="card-header">
+            <h3>Create Report</h3>
           </div>
+          <form class="report-form" id="reportForm" onsubmit="submitReport(event)">
 
-          <div class="form-group">
-            <label>Driver</label>
-            <select id="rdriver" class="form-select" required>
-              <option value="">— Select Driver —</option>
-            </select>
-          </div>
+            <div class="form-group">
+              <label>Vehicle</label>
+              <select id="rvehicle" class="form-select" required>
+                <option value="">— Select Vehicle —</option>
+              </select>
+            </div>
 
-          <div class="form-group">
-            <label>Issue Description</label>
-            <textarea id="rissue" placeholder="Describe the issue..." rows="3" required></textarea>
-          </div>
+            <div class="form-group">
+              <label>Driver</label>
+              <select id="rdriver" class="form-select" required>
+                <option value="">— Select Driver —</option>
+              </select>
+            </div>
 
-          <div class="form-group">
-            <label>Status</label>
-            <select id="rstatus" class="form-select">
-              <option value="Open">Open</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Resolved">Resolved</option>
-            </select>
-          </div>
+            <div class="form-group">
+              <label>Issue Description</label>
+              <textarea id="rissue" placeholder="Describe the issue..." rows="3" required></textarea>
+            </div>
 
-          <button type="submit" class="btn-submit" id="reportSubmitBtn">Submit Report</button>
-        </form>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="rstatus" class="form-select">
+                <option value="Open">Open</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Resolved">Resolved</option>
+              </select>
+            </div>
+
+            <button type="submit" class="btn-submit" id="reportSubmitBtn">Submit Report</button>
+          </form>
+        </div>
+
       </div>
-
     </div>
   </main>
 </div>
