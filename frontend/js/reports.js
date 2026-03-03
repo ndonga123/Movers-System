@@ -3,80 +3,137 @@
    IoT Movers System
    ============================================ */
 
-const API_REPORTS = "https://movers-system.onrender.com/api/reports";
-const API_SUMMARY = "https://movers-system.onrender.com/api/summary";
+const API_REPORTS   = "https://movers-system.onrender.com/api/reports";
+const API_DELIVERIES = "https://movers-system.onrender.com/api/deliveries";
+const API_VEHICLES  = "https://movers-system.onrender.com/api/vehicles";
+const API_DRIVERS   = "https://movers-system.onrender.com/api/drivers";
 
-// ── LOAD ANALYTICS STATS ──
+function authHeaders() {
+  return {
+    "Content-Type": "application/json",
+    "x-auth-token": localStorage.getItem("token") || ""
+  };
+}
+
+// ── LOAD STATS FROM REAL DELIVERIES DATA ──
 async function loadStats() {
   try {
-    const res  = await fetch(API_SUMMARY);
-    const data = await res.json();
+    const res        = await fetch(API_DELIVERIES);
+    const deliveries = await res.json();
 
-    // Completed deliveries
-    const completed = data.completedDeliveries || 47;
-    const target    = data.monthlyTarget       || 60;
-    const pct       = Math.min(Math.round((completed / target) * 100), 100);
-    document.getElementById("statCompleted").textContent         = completed;
-    document.getElementById("progressCompleted").style.width     = pct + "%";
-    document.getElementById("progressCompletedLabel").textContent = `${pct}% of monthly target (${target})`;
+    const total     = deliveries.length;
+    const inTransit = deliveries.filter(d => d.status === "In Transit").length;
+    const delivered = deliveries.filter(d => d.status === "Delivered").length;
+    const pending   = deliveries.filter(d => d.status === "Pending").length;
 
-    // On-time rate
-    const onTime = data.onTimeRate || 83;
-    document.getElementById("statOnTime").textContent         = onTime + "%";
-    document.getElementById("progressOnTime").style.width     = onTime + "%";
-    document.getElementById("progressOnTimeLabel").textContent = `Target: 90%`;
+    // Total deliveries
+    document.getElementById("statCompleted").textContent          = total;
+    document.getElementById("progressCompleted").style.width      = "100%";
+    document.getElementById("progressCompletedLabel").textContent = `${delivered} delivered · ${pending} pending`;
 
-    // Spoilage
-    const spoilage = data.spoilageIncidents || 2;
-    document.getElementById("statSpoilage").textContent         = spoilage;
-    document.getElementById("progressSpoilage").style.width     = Math.min(spoilage * 10, 100) + "%";
-    document.getElementById("progressSpoilageLabel").textContent = "Down 60% vs last month";
+    // In transit
+    const transitPct = total > 0 ? Math.round((inTransit / total) * 100) : 0;
+    document.getElementById("statOnTime").textContent          = inTransit;
+    document.getElementById("progressOnTime").style.width      = transitPct + "%";
+    document.getElementById("progressOnTimeLabel").textContent = `${transitPct}% of total deliveries`;
 
-    // Avg delivery time
-    const avgTime = data.avgDeliveryTime || 4.2;
-    document.getElementById("statAvgTime").textContent        = avgTime + "h";
-    document.getElementById("progressAvgTime").style.width    = Math.min((avgTime / 8) * 100, 100) + "%";
+    // Delivered
+    const deliveredPct = total > 0 ? Math.round((delivered / total) * 100) : 0;
+    document.getElementById("statAvgTime").textContent        = delivered;
+    document.getElementById("progressAvgTime").style.width    = deliveredPct + "%";
+
+    // Open incidents — loaded separately from reports
+    loadOpenIncidents();
+
+    // Update weekly chart with real data
+    updateWeeklyChart(pending, inTransit, delivered);
 
   } catch (err) {
     console.error("Stats load failed:", err);
-    // Keep fallback values already set above
   }
 }
 
-// ── WEEKLY BAR CHART ──
-function initWeeklyChart() {
-  const ctx = document.getElementById("weeklyChart").getContext("2d");
+// ── OPEN INCIDENTS COUNT FROM REPORTS ──
+async function loadOpenIncidents() {
+  try {
+    const res     = await fetch(API_REPORTS);
+    const reports = await res.json();
+    const open    = reports.filter(r => r.status === "Open").length;
+    const total   = reports.length;
+    const pct     = total > 0 ? Math.round((open / total) * 100) : 0;
 
-  new Chart(ctx, {
+    document.getElementById("statSpoilage").textContent          = open;
+    document.getElementById("progressSpoilage").style.width      = pct + "%";
+    document.getElementById("progressSpoilageLabel").textContent = `${pct}% of ${total} reports`;
+  } catch (err) {
+    console.error("Incidents load failed:", err);
+  }
+}
+
+// ── POPULATE VEHICLE AND DRIVER DROPDOWNS ──
+async function loadDropdowns() {
+  try {
+    const [vRes, dRes] = await Promise.all([
+      fetch(API_VEHICLES),
+      fetch(API_DRIVERS)
+    ]);
+    const vehicles = await vRes.json();
+    const drivers  = await dRes.json();
+
+    const vSel = document.getElementById("rvehicle");
+    const dSel = document.getElementById("rdriver");
+
+    vSel.innerHTML = '<option value="">— Select Vehicle —</option>';
+    vehicles.forEach(v => {
+      const opt = document.createElement("option");
+      opt.value       = v.name;
+      opt.textContent = `${v.name} (${v.from || "?"} → ${v.to || "?"})`;
+      vSel.appendChild(opt);
+    });
+
+    dSel.innerHTML = '<option value="">— Select Driver —</option>';
+    drivers.forEach(d => {
+      const opt = document.createElement("option");
+      opt.value       = d.name;
+      opt.textContent = d.vehicleID ? `${d.name} (${d.vehicleID})` : d.name;
+      dSel.appendChild(opt);
+    });
+
+  } catch (err) {
+    console.error("Dropdowns failed:", err);
+    showToast("Failed to load vehicles/drivers", true);
+  }
+}
+
+// ── WEEKLY CHART — from real delivery statuses ──
+let weeklyChart;
+
+function updateWeeklyChart(pending, inTransit, delivered) {
+  const ctx = document.getElementById("weeklyChart").getContext("2d");
+  if (weeklyChart) weeklyChart.destroy();
+
+  weeklyChart = new Chart(ctx, {
     type: "bar",
     data: {
-      labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-      datasets: [
-        {
-          label: "Completed",
-          data: [8, 10, 7, 9, 6, 5, 2],
-          backgroundColor: "rgba(61,220,110,0.7)",
-          borderRadius: 6,
-          borderSkipped: false
-        },
-        {
-          label: "Delayed",
-          data: [1, 0, 2, 1, 1, 0, 0],
-          backgroundColor: "rgba(232,69,69,0.5)",
-          borderRadius: 6,
-          borderSkipped: false
-        }
-      ]
+      labels: ["Pending", "In Transit", "Delivered"],
+      datasets: [{
+        label: "Deliveries",
+        data: [pending, inTransit, delivered],
+        backgroundColor: [
+          "rgba(245,200,66,0.7)",
+          "rgba(91,200,245,0.7)",
+          "rgba(61,220,110,0.7)"
+        ],
+        borderRadius: 6,
+        borderSkipped: false
+      }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
         legend: {
-          labels: {
-            color: "#5a7a5f",
-            font: { family: "Space Mono", size: 10 }
-          }
+          labels: { color: "#5a7a5f", font: { family: "Space Mono", size: 10 } }
         }
       },
       scales: {
@@ -85,7 +142,7 @@ function initWeeklyChart() {
           grid:  { color: "#1e3022" }
         },
         y: {
-          ticks: { color: "#5a7a5f", font: { family: "Space Mono", size: 10 } },
+          ticks: { color: "#5a7a5f", font: { family: "Space Mono", size: 10 }, stepSize: 1 },
           grid:  { color: "#1e3022" }
         }
       }
@@ -98,7 +155,6 @@ let incidentChart;
 
 function updateIncidentChart(open, inProgress, resolved) {
   const ctx = document.getElementById("incidentChart").getContext("2d");
-
   if (incidentChart) incidentChart.destroy();
 
   incidentChart = new Chart(ctx, {
@@ -122,11 +178,7 @@ function updateIncidentChart(open, inProgress, resolved) {
       plugins: {
         legend: {
           position: "bottom",
-          labels: {
-            color: "#5a7a5f",
-            font: { family: "Space Mono", size: 10 },
-            padding: 14
-          }
+          labels: { color: "#5a7a5f", font: { family: "Space Mono", size: 10 }, padding: 14 }
         }
       },
       cutout: "65%"
@@ -134,7 +186,7 @@ function updateIncidentChart(open, inProgress, resolved) {
   });
 }
 
-// ── LOAD INCIDENT REPORTS ──
+// ── LOAD REPORTS TABLE ──
 async function loadReports() {
   try {
     const res     = await fetch(API_REPORTS);
@@ -156,7 +208,6 @@ async function loadReports() {
     empty.style.display = "none";
     tbody.innerHTML     = "";
 
-    // Count statuses for chart
     let open = 0, inProgress = 0, resolved = 0;
 
     reports.forEach(r => {
@@ -167,6 +218,7 @@ async function loadReports() {
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td class="td-plate">${r.vehicle || "—"}</td>
+        <td>${r.driver  || "—"}</td>
         <td class="td-issue">${r.issue   || "—"}</td>
         <td><span class="status-badge ${statusClass(r.status)}">${r.status}</span></td>
         <td class="td-date">${r.date ? new Date(r.date).toLocaleDateString() : "—"}</td>
@@ -203,9 +255,11 @@ async function submitReport(e) {
   e.preventDefault();
 
   const data = {
-    vehicle: document.getElementById("rvehicle").value.trim(),
+    vehicle: document.getElementById("rvehicle").value,
+    driver:  document.getElementById("rdriver").value,
     issue:   document.getElementById("rissue").value.trim(),
-    status:  document.getElementById("rstatus").value
+    status:  document.getElementById("rstatus").value,
+    date:    new Date()
   };
 
   const btn = document.getElementById("reportSubmitBtn");
@@ -215,14 +269,13 @@ async function submitReport(e) {
   try {
     await fetch(API_REPORTS, {
       method:  "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders(),
       body:    JSON.stringify(data)
     });
-
     document.getElementById("reportForm").reset();
     showToast("✓ Report submitted");
     loadReports();
-
+    loadStats();
   } catch (err) {
     showToast("Failed to submit report", true);
   } finally {
@@ -236,11 +289,12 @@ async function resolveReport(id) {
   try {
     await fetch(`${API_REPORTS}/${id}`, {
       method:  "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders(),
       body:    JSON.stringify({ status: "Resolved" })
     });
     showToast("✓ Report resolved");
     loadReports();
+    loadStats();
   } catch (err) {
     showToast("Failed to resolve report", true);
   }
@@ -250,9 +304,10 @@ async function resolveReport(id) {
 async function deleteReport(id) {
   if (!confirm("Delete this report?")) return;
   try {
-    await fetch(`${API_REPORTS}/${id}`, { method: "DELETE" });
+    await fetch(`${API_REPORTS}/${id}`, { method: "DELETE", headers: authHeaders() });
     showToast("✓ Report deleted");
     loadReports();
+    loadStats();
   } catch (err) {
     showToast("Failed to delete report", true);
   }
@@ -263,16 +318,16 @@ function exportCSV() {
   fetch(API_REPORTS)
     .then(r => r.json())
     .then(reports => {
-      const rows = [["Vehicle", "Issue", "Status", "Date"]];
+      const rows = [["Vehicle", "Driver", "Issue", "Status", "Date"]];
       reports.forEach(r => {
         rows.push([
-          r.vehicle,
-          `"${r.issue}"`,
-          r.status,
+          r.vehicle || "",
+          r.driver  || "",
+          `"${r.issue || ""}"`,
+          r.status  || "",
           r.date ? new Date(r.date).toLocaleDateString() : ""
         ]);
       });
-
       const csv  = rows.map(r => r.join(",")).join("\n");
       const blob = new Blob([csv], { type: "text/csv" });
       const url  = URL.createObjectURL(blob);
@@ -298,7 +353,7 @@ function showToast(msg, isError = false) {
 
 // ── INIT ──
 document.addEventListener("DOMContentLoaded", () => {
-  initWeeklyChart();
+  loadDropdowns();
   loadStats();
   loadReports();
 });

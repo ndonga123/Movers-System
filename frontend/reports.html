@@ -29,19 +29,14 @@
 
     <nav class="sidebar-nav">
       <span class="nav-section">Monitor</span>
-      <a class="nav-item" href="dashboard.html">
-        <span class="nav-ico">⬡</span> Dashboard
-      </a>
-      <a class="nav-item" href="vehicles.html">
-        <span class="nav-ico">🚛</span> Vehicles
-      </a>
+      <a class="nav-item" href="dashboard.html"><span class="nav-ico">⬡</span> Dashboard</a>
+      <a class="nav-item" href="vehicles.html"><span class="nav-ico">🚛</span> Vehicles</a>
+      <a class="nav-item" href="drivers.html"><span class="nav-ico">👤</span> Drivers</a>
+      <a class="nav-item" href="sensors.html"><span class="nav-ico">📡</span> Sensors</a>
       <span class="nav-section">Insights</span>
-      <a class="nav-item active" href="reports.html">
-        <span class="nav-ico">📊</span> Reports
-      </a>
-      <a class="nav-item" href="dashboard.html">
-        <span class="nav-ico">🔔</span> Alerts
-      </a>
+      <a class="nav-item active" href="reports.html"><span class="nav-ico">📊</span> Reports</a>
+      <a class="nav-item" href="deliveries.html"><span class="nav-ico">📦</span> Deliveries</a>
+      <a class="nav-item" href="dashboard.html"><span class="nav-ico">🔔</span> Alerts</a>
     </nav>
 
     <div class="sidebar-footer">
@@ -53,80 +48,77 @@
         </div>
       </div>
       <button class="theme-btn" onclick="toggleDark()">🌙 Toggle Theme</button>
-      <a class="logout-link" href="login.html">↩ Logout</a>
+      <a class="logout-link" href="login.html" onclick="localStorage.clear()">↩ Logout</a>
     </div>
   </aside>
 
   <!-- MAIN -->
   <main>
 
-    <!-- Header -->
     <div class="page-header">
       <div class="page-title">
         <h1>Analytics & Reports</h1>
-        <p class="sub">/ Delivery performance · Incident tracking · February 2026</p>
+        <p class="sub">/ Delivery performance · Incident tracking · Live data</p>
       </div>
       <button class="btn-export" onclick="exportCSV()">↓ Export CSV</button>
     </div>
 
-    <!-- Analytics Cards -->
+    <!-- Stats from real DB -->
     <div class="reports-stats">
       <div class="card stat-card">
         <span class="stat-ico">📦</span>
-        <div class="stat-label">Deliveries Completed</div>
+        <div class="stat-label">Total Deliveries</div>
         <div class="stat-val green" id="statCompleted">--</div>
         <div class="stat-progress">
           <div class="progress-track">
             <div class="progress-fill green-fill" id="progressCompleted" style="width:0%"></div>
           </div>
-          <span class="progress-label" id="progressCompletedLabel">-- of monthly target</span>
+          <span class="progress-label" id="progressCompletedLabel">Loading...</span>
         </div>
       </div>
 
       <div class="card stat-card">
-        <span class="stat-ico">⏱</span>
-        <div class="stat-label">On-Time Delivery Rate</div>
+        <span class="stat-ico">🚚</span>
+        <div class="stat-label">In Transit</div>
         <div class="stat-val yellow" id="statOnTime">--</div>
         <div class="stat-progress">
           <div class="progress-track">
             <div class="progress-fill yellow-fill" id="progressOnTime" style="width:0%"></div>
           </div>
-          <span class="progress-label" id="progressOnTimeLabel">Target: 90%</span>
+          <span class="progress-label" id="progressOnTimeLabel">of total deliveries</span>
         </div>
       </div>
 
       <div class="card stat-card">
         <span class="stat-ico">⚠️</span>
-        <div class="stat-label">Spoilage Incidents</div>
+        <div class="stat-label">Open Incidents</div>
         <div class="stat-val red" id="statSpoilage">--</div>
         <div class="stat-progress">
           <div class="progress-track">
             <div class="progress-fill red-fill" id="progressSpoilage" style="width:0%"></div>
           </div>
-          <span class="progress-label" id="progressSpoilageLabel">vs last month</span>
+          <span class="progress-label" id="progressSpoilageLabel">of total reports</span>
         </div>
       </div>
 
       <div class="card stat-card">
-        <span class="stat-ico">🕐</span>
-        <div class="stat-label">Avg Delivery Time</div>
+        <span class="stat-ico">✅</span>
+        <div class="stat-label">Delivered</div>
         <div class="stat-val blue" id="statAvgTime">--</div>
         <div class="stat-progress">
           <div class="progress-track">
             <div class="progress-fill blue-fill" id="progressAvgTime" style="width:0%"></div>
           </div>
-          <span class="progress-label">Target: 3.5h</span>
+          <span class="progress-label">completed deliveries</span>
         </div>
       </div>
     </div>
 
     <!-- Charts Row -->
     <div class="reports-grid">
-
-      <!-- Weekly Bar Chart -->
       <div class="card big">
         <div class="card-header">
-          <h3>Weekly Delivery Performance</h3>
+          <h3>Delivery Status Overview</h3>
           <span class="card-tag live">LIVE</span>
         </div>
         <div class="chart-wrap">
@@ -134,7 +126,6 @@
         </div>
       </div>
 
-      <!-- Incident Pie Chart -->
       <div class="card">
         <div class="card-header">
           <h3>Incident Breakdown</h3>
@@ -149,7 +140,6 @@
     <!-- Incident Reports Table + Form -->
     <div class="reports-grid">
 
-      <!-- Table -->
       <div class="card big">
         <div class="card-header">
           <h3>Incident Reports</h3>
@@ -160,6 +150,7 @@
             <thead>
               <tr>
                 <th>Vehicle</th>
+                <th>Driver</th>
                 <th>Issue</th>
                 <th>Status</th>
                 <th>Date</th>
@@ -183,8 +174,17 @@
         <form class="report-form" id="reportForm" onsubmit="submitReport(event)">
 
           <div class="form-group">
-            <label>Vehicle ID / Name</label>
-            <input id="rvehicle" placeholder="e.g. KDV 405 S" required/>
+            <label>Vehicle</label>
+            <select id="rvehicle" class="form-select" required>
+              <option value="">— Select Vehicle —</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Driver</label>
+            <select id="rdriver" class="form-select" required>
+              <option value="">— Select Driver —</option>
+            </select>
           </div>
 
           <div class="form-group">
@@ -194,7 +194,7 @@
 
           <div class="form-group">
             <label>Status</label>
-            <select id="rstatus">
+            <select id="rstatus" class="form-select">
               <option value="Open">Open</option>
               <option value="In Progress">In Progress</option>
               <option value="Resolved">Resolved</option>
@@ -209,10 +209,10 @@
   </main>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script src="js/reports.js"></script>
+<script src="js/role-guard.js"></script>
 <script>
   function toggleDark() { document.body.classList.toggle("dark"); }
 
@@ -238,6 +238,5 @@
 <footer class="footer">
   © 2026 IoT Movers System &nbsp;|&nbsp; Real-time Fleet Tracking
 </footer>
-
 </body>
 </html>
