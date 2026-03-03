@@ -28,25 +28,14 @@
 
     <nav class="sidebar-nav">
       <span class="nav-section">Monitor</span>
-      <a class="nav-item" href="dashboard.html">
-        <span class="nav-ico">⬡</span> Dashboard
-      </a>
-      <a class="nav-item" href="vehicles.html">
-        <span class="nav-ico">🚛</span> Vehicles
-      </a>
-      <a class="nav-item" href="drivers.html">
-        <span class="nav-ico">👤</span> Drivers
-      </a>
-      <a class="nav-item" href="sensors.html">
-        <span class="nav-ico">📡</span> Sensors
-      </a>
+      <a class="nav-item" href="dashboard.html"><span class="nav-ico">⬡</span> Dashboard</a>
+      <a class="nav-item" href="vehicles.html"><span class="nav-ico">🚛</span> Vehicles</a>
+      <a class="nav-item" href="drivers.html"><span class="nav-ico">👤</span> Drivers</a>
+      <a class="nav-item" href="sensors.html"><span class="nav-ico">📡</span> Sensors</a>
       <span class="nav-section">Insights</span>
-      <a class="nav-item" href="reports.html">
-        <span class="nav-ico">📊</span> Reports
-      </a>
-      <a class="nav-item active" href="deliveries.html">
-        <span class="nav-ico">📦</span> Deliveries
-      </a>
+      <a class="nav-item" href="reports.html"><span class="nav-ico">📊</span> Reports</a>
+      <a class="nav-item active" href="deliveries.html"><span class="nav-ico">📦</span> Deliveries</a>
+      <a class="nav-item" href="dashboard.html"><span class="nav-ico">🔔</span> Alerts</a>
     </nav>
 
     <div class="sidebar-footer">
@@ -124,30 +113,39 @@
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">✕</button>
     <div class="modal-title" id="modalTitle">Add Delivery</div>
-    <div class="modal-sub" id="modalSub">Register a new delivery</div>
+    <div class="modal-sub" id="modalSub">Select vehicle and driver — route auto-filled</div>
 
     <form class="vehicle-form" id="deliveryForm" onsubmit="handleSubmit(event)">
       <input type="hidden" id="editId"/>
 
+      <!-- Vehicle dropdown — fetched from /api/vehicles -->
       <div class="form-group">
-        <label>Vehicle (Plate)</label>
-        <input type="text" id="dvehicle" placeholder="e.g. KDV 405 S" required/>
+        <label>Vehicle</label>
+        <select id="dvehicle" class="form-select" onchange="onVehicleChange()" required>
+          <option value="">— Select Vehicle —</option>
+        </select>
       </div>
 
-      <div class="form-group">
-        <label>Driver Name</label>
-        <input type="text" id="ddriver" placeholder="e.g. James Mwangi" required/>
-      </div>
-
+      <!-- Route auto-filled from selected vehicle -->
       <div class="form-row">
         <div class="form-group">
           <label>From</label>
-          <input type="text" id="dfrom" placeholder="e.g. Nairobi" required/>
+          <input type="text" id="dfrom" placeholder="Auto-filled from vehicle" readonly
+            style="opacity:0.7; cursor:not-allowed;"/>
         </div>
         <div class="form-group">
           <label>To</label>
-          <input type="text" id="dto" placeholder="e.g. Nakuru" required/>
+          <input type="text" id="dto" placeholder="Auto-filled from vehicle" readonly
+            style="opacity:0.7; cursor:not-allowed;"/>
         </div>
+      </div>
+
+      <!-- Driver dropdown — fetched from /api/drivers -->
+      <div class="form-group">
+        <label>Driver</label>
+        <select id="ddriver" class="form-select" required>
+          <option value="">— Select Driver —</option>
+        </select>
       </div>
 
       <div class="form-group">
@@ -167,8 +165,13 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  const API = "https://movers-system.onrender.com/api/deliveries";
+  const API          = "https://movers-system.onrender.com/api/deliveries";
+  const VEHICLES_API = "https://movers-system.onrender.com/api/vehicles";
+  const DRIVERS_API  = "https://movers-system.onrender.com/api/drivers";
+
   let editingId = null;
+  let vehiclesCache = [];
+  let driversCache  = [];
 
   function authHeaders() {
     return {
@@ -177,6 +180,56 @@
     };
   }
 
+  // ── POPULATE DROPDOWNS FROM DB ──
+  async function loadDropdowns() {
+    try {
+      const [vRes, dRes] = await Promise.all([
+        fetch(VEHICLES_API),
+        fetch(DRIVERS_API)
+      ]);
+      vehiclesCache = await vRes.json();
+      driversCache  = await dRes.json();
+
+      const vSel = document.getElementById("dvehicle");
+      const dSel = document.getElementById("ddriver");
+
+      // Clear and repopulate vehicles
+      vSel.innerHTML = '<option value="">— Select Vehicle —</option>';
+      vehiclesCache.forEach(v => {
+        const opt = document.createElement("option");
+        opt.value       = v.name;
+        opt.textContent = `${v.name} (${v.from || "?"} → ${v.to || "?"})`;
+        opt.dataset.from = v.from || "";
+        opt.dataset.to   = v.to   || "";
+        vSel.appendChild(opt);
+      });
+
+      // Clear and repopulate drivers
+      dSel.innerHTML = '<option value="">— Select Driver —</option>';
+      driversCache.forEach(d => {
+        const opt = document.createElement("option");
+        opt.value       = d.name;
+        opt.textContent = d.vehicleID
+          ? `${d.name} (${d.vehicleID})`
+          : d.name;
+        dSel.appendChild(opt);
+      });
+
+    } catch (err) {
+      console.error("Failed to load dropdowns:", err);
+      showToast("Failed to load vehicles/drivers", true);
+    }
+  }
+
+  // ── AUTO-FILL ROUTE WHEN VEHICLE SELECTED ──
+  function onVehicleChange() {
+    const sel = document.getElementById("dvehicle");
+    const selected = sel.options[sel.selectedIndex];
+    document.getElementById("dfrom").value = selected.dataset.from || "";
+    document.getElementById("dto").value   = selected.dataset.to   || "";
+  }
+
+  // ── LOAD DELIVERIES TABLE ──
   async function loadDeliveries() {
     try {
       const res        = await fetch(API);
@@ -185,9 +238,9 @@
       const empty      = document.getElementById("emptyState");
       const table      = document.getElementById("deliveryTable");
 
-      document.getElementById("statTotal").textContent       = deliveries.length;
-      document.getElementById("statTransit").textContent     = deliveries.filter(d => d.status === "In Transit").length;
-      document.getElementById("statDelivered").textContent   = deliveries.filter(d => d.status === "Delivered").length;
+      document.getElementById("statTotal").textContent        = deliveries.length;
+      document.getElementById("statTransit").textContent      = deliveries.filter(d => d.status === "In Transit").length;
+      document.getElementById("statDelivered").textContent    = deliveries.filter(d => d.status === "Delivered").length;
       document.getElementById("deliveryCountTag").textContent = deliveries.length + " DELIVERIES";
 
       if (deliveries.length === 0) {
@@ -204,13 +257,13 @@
       const canManage = ["admin", "transporter"].includes(role);
 
       deliveries.forEach(d => {
-        const statusClass = d.status === "Delivered" ? "status-transit"
+        const statusClass = d.status === "Delivered"  ? "status-transit"
                           : d.status === "In Transit" ? "status-active"
                           : "status-pending";
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td class="td-plate">🚛 ${d.vehicle || "—"}</td>
-          <td>👤 ${d.driver || "—"}</td>
+          <td>👤 ${d.driver  || "—"}</td>
           <td class="td-route">${d.from || "—"} → ${d.to || "—"}</td>
           <td>
             <span class="status-badge ${statusClass}">
@@ -238,30 +291,37 @@
     }
   }
 
-  function openModal() {
+  // ── OPEN ADD MODAL ──
+  async function openModal() {
     editingId = null;
     document.getElementById("deliveryForm").reset();
     document.getElementById("editId").value           = "";
+    document.getElementById("dfrom").value            = "";
+    document.getElementById("dto").value              = "";
     document.getElementById("modalTitle").textContent = "Add Delivery";
-    document.getElementById("modalSub").textContent   = "Register a new delivery";
+    document.getElementById("modalSub").textContent   = "Select vehicle and driver — route auto-filled";
     document.getElementById("submitBtn").textContent  = "Add Delivery";
+    await loadDropdowns();
     document.getElementById("modalOverlay").classList.add("open");
   }
 
-  function openEditModal(id, vehicle, driver, from, to, status) {
+  // ── OPEN EDIT MODAL ──
+  async function openEditModal(id, vehicle, driver, from, to, status) {
     editingId = id;
-    document.getElementById("editId").value    = id;
-    document.getElementById("dvehicle").value  = vehicle;
-    document.getElementById("ddriver").value   = driver;
-    document.getElementById("dfrom").value     = from;
-    document.getElementById("dto").value       = to;
-    document.getElementById("dstatus").value   = status;
+    await loadDropdowns();
+    document.getElementById("editId").value           = id;
+    document.getElementById("dvehicle").value         = vehicle;
+    document.getElementById("ddriver").value          = driver;
+    document.getElementById("dfrom").value            = from;
+    document.getElementById("dto").value              = to;
+    document.getElementById("dstatus").value          = status;
     document.getElementById("modalTitle").textContent = "Edit Delivery";
     document.getElementById("modalSub").textContent   = "Update delivery details";
     document.getElementById("submitBtn").textContent  = "Save Changes";
     document.getElementById("modalOverlay").classList.add("open");
   }
 
+  // ── CLOSE MODAL ──
   function closeModal() {
     document.getElementById("modalOverlay").classList.remove("open");
     editingId = null;
@@ -271,18 +331,19 @@
     if (e.target === this) closeModal();
   });
 
+  // ── HANDLE SUBMIT ──
   async function handleSubmit(e) {
     e.preventDefault();
     const data = {
-      vehicle: document.getElementById("dvehicle").value.trim(),
-      driver:  document.getElementById("ddriver").value.trim(),
-      from:    document.getElementById("dfrom").value.trim(),
-      to:      document.getElementById("dto").value.trim(),
+      vehicle: document.getElementById("dvehicle").value,
+      driver:  document.getElementById("ddriver").value,
+      from:    document.getElementById("dfrom").value,
+      to:      document.getElementById("dto").value,
       status:  document.getElementById("dstatus").value
     };
 
     const btn = document.getElementById("submitBtn");
-    btn.disabled = true;
+    btn.disabled    = true;
     btn.textContent = "Saving...";
 
     try {
@@ -311,6 +372,7 @@
     }
   }
 
+  // ── DELETE ──
   async function deleteDelivery(id) {
     if (!confirm("Delete this delivery? This cannot be undone.")) return;
     try {
@@ -322,6 +384,7 @@
     }
   }
 
+  // ── TOAST ──
   function showToast(msg, isError = false) {
     const t = document.getElementById("toast");
     t.textContent   = msg;
