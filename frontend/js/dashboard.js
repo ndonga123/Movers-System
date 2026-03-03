@@ -2,14 +2,19 @@ console.log("DASHBOARD JS LOADED");
 
 const API = "https://movers-system.onrender.com/api";
 
-let map, marker, routeLine;
+let map, routeLine;
 let currentRoute = [];
 let progress = 0;
 
+// Moving dot marker
+let movingDot      = null;
+let startMarker    = null;
+let endMarker      = null;
+
 // ---------------- NOTIFICATIONS ----------------
 const notifyBtn = document.getElementById("notifyBtn");
-const panel = document.getElementById("notifications");
-let lastAlert = "";
+const panel     = document.getElementById("notifications");
+let lastAlert   = "";
 
 if (notifyBtn) {
   notifyBtn.onclick = () => {
@@ -21,19 +26,62 @@ if (notifyBtn) {
 function pushNotification(msg) {
   if (!panel) return;
   if (msg === lastAlert) return;
-
   lastAlert = msg;
   panel.style.display = "block";
-
   const p = document.createElement("p");
   p.textContent = msg;
-  p.className = "alert-msg";
+  p.className   = "alert-msg";
   panel.prepend(p);
 }
 
 // ---------------- DARK MODE ----------------
-function toggleDark() {
-  document.body.classList.toggle("dark");
+function toggleDark() { document.body.classList.toggle("dark"); }
+
+// ---------------- CUSTOM ICONS ----------------
+function makeIcon(color, label) {
+  return L.divIcon({
+    className: "",
+    html: `
+      <div style="
+        background:${color};
+        color:#fff;
+        border:2px solid #fff;
+        border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);
+        width:28px; height:28px;
+        display:flex; align-items:center; justify-content:center;
+        font-size:12px; font-weight:800;
+        box-shadow:0 2px 8px rgba(0,0,0,0.4);">
+        <span style="transform:rotate(45deg)">${label}</span>
+      </div>`,
+    iconSize:   [28, 28],
+    iconAnchor: [14, 28],
+    popupAnchor:[0, -30]
+  });
+}
+
+function makeDotIcon() {
+  return L.divIcon({
+    className: "",
+    html: `
+      <div style="
+        background:#5bc8f5;
+        border:3px solid #fff;
+        border-radius:50%;
+        width:18px; height:18px;
+        box-shadow:0 0 10px rgba(91,200,245,0.8), 0 0 20px rgba(91,200,245,0.4);
+        animation: pulse-dot 1.5s infinite;">
+      </div>
+      <style>
+        @keyframes pulse-dot {
+          0%   { box-shadow: 0 0 0 0 rgba(91,200,245,0.6); }
+          70%  { box-shadow: 0 0 0 10px rgba(91,200,245,0); }
+          100% { box-shadow: 0 0 0 0 rgba(91,200,245,0); }
+        }
+      </style>`,
+    iconSize:   [18, 18],
+    iconAnchor: [9, 9]
+  });
 }
 
 // ---------------- SUMMARY ----------------
@@ -65,7 +113,6 @@ async function loadVehicleList() {
     const list = document.getElementById("vehicleList");
     list.innerHTML = "";
 
-    // Update active vehicles count
     const activeEl = document.getElementById("activeVehicles");
     if (activeEl) activeEl.textContent = vehicles.length;
 
@@ -87,29 +134,46 @@ async function loadVehicleList() {
           return;
         }
 
-        if (routeLine) map.removeLayer(routeLine);
+        // Clear old layers
+        if (routeLine)   map.removeLayer(routeLine);
+        if (startMarker) map.removeLayer(startMarker);
+        if (endMarker)   map.removeLayer(endMarker);
+        if (movingDot)   map.removeLayer(movingDot);
 
-        // ✅ FIX: route points are {lat, lng} objects from MongoDB
-        // Convert to [lat, lng] arrays for Leaflet
+        // Convert {lat,lng} objects to [lat,lng] arrays
         const coords = v.route.map(p => [
           parseFloat(p.lat),
           parseFloat(p.lng)
         ]);
 
+        // Draw route polyline
         routeLine = L.polyline(coords, {
-          color: "#3ddc6e",
-          weight: 4,
+          color:   "#3ddc6e",
+          weight:  4,
           opacity: 0.8
         }).addTo(map);
 
         map.fitBounds(routeLine.getBounds());
 
-        // Store as [lat, lng] arrays for moveVehicle()
-        currentRoute = coords;
-        progress = 0;
-        marker.setLatLng(coords[0]);
+        // ── START MARKER (green) ──
+        startMarker = L.marker(coords[0], { icon: makeIcon("#3ddc6e", "A") })
+          .addTo(map)
+          .bindPopup(`<b>🟢 From</b><br>${v.from || "Start"}`)
+          .openPopup();
 
-        // Update route label
+        // ── END MARKER (red) ──
+        endMarker = L.marker(coords[coords.length - 1], { icon: makeIcon("#e84545", "B") })
+          .addTo(map)
+          .bindPopup(`<b>🔴 To</b><br>${v.to || "Destination"}`);
+
+        // ── MOVING DOT ──
+        movingDot = L.marker(coords[0], { icon: makeDotIcon() }).addTo(map);
+
+        // Reset animation
+        currentRoute = coords;
+        progress     = 0;
+
+        // Update label
         const label = document.getElementById("routeLabel");
         if (label) label.textContent = `${v.name}: ${v.from} → ${v.to}`;
 
@@ -135,13 +199,12 @@ function deleteVehicle(id, name) {
   fetch(`${API}/vehicles/${id}`, { method: "DELETE" })
     .then(() => {
       loadVehicleList();
-      // Clear route if deleted vehicle was being shown
-      if (routeLine) {
-        map.removeLayer(routeLine);
-        routeLine = null;
-        currentRoute = [];
-        progress = 0;
-      }
+      if (routeLine)   { map.removeLayer(routeLine);   routeLine   = null; }
+      if (startMarker) { map.removeLayer(startMarker); startMarker = null; }
+      if (endMarker)   { map.removeLayer(endMarker);   endMarker   = null; }
+      if (movingDot)   { map.removeLayer(movingDot);   movingDot   = null; }
+      currentRoute = [];
+      progress     = 0;
     });
 }
 
@@ -206,17 +269,14 @@ function initChart() {
 
 function updateChart(temp, hum) {
   const now = new Date().toLocaleTimeString();
-
   labels.push(now);
   tempData.push(Number(temp));
   humData.push(Number(hum));
-
   if (labels.length > 8) {
     labels.shift();
     tempData.shift();
     humData.shift();
   }
-
   sensorChart.update();
 }
 
@@ -227,14 +287,11 @@ function initMap() {
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "© OpenStreetMap"
   }).addTo(map);
-
-  marker = L.marker([-1.2921, 36.8219]).addTo(map);
 }
 
 // ---------------- SMOOTH MOVEMENT ----------------
-// currentRoute is array of [lat, lng] arrays — coords[i][0] = lat, coords[i][1] = lng
 function moveVehicle() {
-  if (!currentRoute.length) return;
+  if (!currentRoute.length || !movingDot) return;
 
   const steps = 900;
   progress++;
@@ -248,14 +305,12 @@ function moveVehicle() {
   const i  = Math.floor(t * (currentRoute.length - 1));
   const p1 = currentRoute[i];
   const p2 = currentRoute[i + 1] || p1;
-
   const frac = (t * currentRoute.length) % 1;
 
-  // ✅ p1[0] = lat, p1[1] = lng — matches the [lat, lng] array format we set above
   const lat = p1[0] + (p2[0] - p1[0]) * frac;
   const lng = p1[1] + (p2[1] - p1[1]) * frac;
 
-  marker.setLatLng([lat, lng]);
+  movingDot.setLatLng([lat, lng]);
 }
 
 // ---------------- INIT ----------------
@@ -265,6 +320,6 @@ document.addEventListener("DOMContentLoaded", () => {
   loadSummary();
   loadVehicleList();
 
-  setInterval(loadSummary,   5000);
-  setInterval(moveVehicle,   1000);
+  setInterval(loadSummary, 5000);
+  setInterval(moveVehicle, 1000);
 });
