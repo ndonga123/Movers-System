@@ -1,31 +1,10 @@
-const express = require("express");
-const router  = express.Router();
-const Vehicle = require("../models/Vehicle");
+const express               = require("express");
+const router                = express.Router();
+const Vehicle               = require("../models/Vehicle");
+const { buildRoute }        = require("../utils/routeService");
+const { auth, requireRole } = require("../middleware/auth");
 
-// ── GEOCODE city name → coords using Nominatim (free, no key needed) ──
-async function geocodeCity(cityName) {
-  const query = encodeURIComponent(`${cityName}, Kenya`);
-  const url   = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`;
-  const res   = await fetch(url, { headers: { "User-Agent": "IoTMoversSystem/1.0" } });
-  const data  = await res.json();
-  if (!data.length) throw new Error(`City not found: ${cityName}`);
-  return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-}
-
-// ── GET ROAD ROUTE via ORS — key from .env ──
-async function getRoute(fromCoords, toCoords) {
-  const key = process.env.ORS_KEY;
-  if (!key) throw new Error("ORS_KEY not set in .env");
-
-  const url = `https://api.openrouteservice.org/v2/directions/driving-car?start=${fromCoords.lng},${fromCoords.lat}&end=${toCoords.lng},${toCoords.lat}`;
-  const res = await fetch(url, { headers: { "Authorization": key } });
-  if (!res.ok) throw new Error("ORS failed: " + res.status);
-
-  const data = await res.json();
-  return data.features[0].geometry.coordinates.map(p => ({ lat: p[1], lng: p[0] }));
-}
-
-// ── GET all vehicles ──
+// GET all vehicles — public
 router.get("/", async (req, res) => {
   try {
     const vehicles = await Vehicle.find();
@@ -35,8 +14,8 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ── POST add vehicle ──
-router.post("/", async (req, res) => {
+// POST add vehicle — admin and transporter only
+router.post("/", auth, requireRole("admin", "transporter"), async (req, res) => {
   try {
     const { name, from, to } = req.body;
 
@@ -44,14 +23,11 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "name, from and to are required" });
     }
 
-    const [fromCoords, toCoords] = await Promise.all([
-      geocodeCity(from),
-      geocodeCity(to)
-    ]);
-
-    let route = [];
+    let fromCoords = {}, route = [];
     try {
-      route = await getRoute(fromCoords, toCoords);
+      const result = await buildRoute(from, to);
+      fromCoords   = result.fromCoords;
+      route        = result.route;
     } catch (routeErr) {
       console.warn("Route generation failed, saving without route:", routeErr.message);
     }
@@ -60,8 +36,8 @@ router.post("/", async (req, res) => {
       name,
       from,
       to,
-      latitude:  fromCoords.lat,
-      longitude: fromCoords.lng,
+      latitude:  fromCoords.lat || 0,
+      longitude: fromCoords.lng || 0,
       route
     });
 
@@ -74,19 +50,15 @@ router.post("/", async (req, res) => {
   }
 });
 
-// ── PUT update vehicle ──
-router.put("/:id", async (req, res) => {
+// PUT update vehicle — admin and transporter only
+router.put("/:id", auth, requireRole("admin", "transporter"), async (req, res) => {
   try {
     const { from, to } = req.body;
     let extra = {};
 
     if (from && to) {
       try {
-        const [fromCoords, toCoords] = await Promise.all([
-          geocodeCity(from),
-          geocodeCity(to)
-        ]);
-        const route = await getRoute(fromCoords, toCoords);
+        const { fromCoords, route } = await buildRoute(from, to);
         extra = { latitude: fromCoords.lat, longitude: fromCoords.lng, route };
       } catch (err) {
         console.warn("Re-routing failed on edit:", err.message);
@@ -105,8 +77,8 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// ── DELETE vehicle ──
-router.delete("/:id", async (req, res) => {
+// DELETE vehicle — admin only
+router.delete("/:id", auth, requireRole("admin"), async (req, res) => {
   try {
     await Vehicle.findByIdAndDelete(req.params.id);
     res.json({ msg: "deleted" });
