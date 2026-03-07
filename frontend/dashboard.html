@@ -39,8 +39,8 @@
       <div class="user-pill">
         <div class="user-avatar" id="userAvatar">T</div>
         <div class="user-info">
-          <p id="userName">Peter Ndonga</p>
-          <span id="userRoleLabel">Transporter</span>
+          <p id="userName">Loading...</p>
+          <span id="userRoleLabel">—</span>
         </div>
       </div>
       <button class="theme-btn" onclick="toggleDark()">🌙 Toggle Theme</button>
@@ -126,11 +126,6 @@
   }
   setInterval(updateClock, 1000);
   updateClock();
-
-  function switchRole(role, btn) {
-    document.querySelectorAll(".role-btn").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-  }
 </script>
 
 <footer class="footer">

@@ -8,15 +8,34 @@ function authHeaders() {
   return { "Content-Type": "application/json", "x-auth-token": localStorage.getItem("token") || "" };
 }
 
+// ── HELPER: set a stat card value + progress bar ──
+function setStat(valId, barId, labelId, value, pct, label) {
+  const v = document.getElementById(valId);
+  const b = document.getElementById(barId);
+  const l = document.getElementById(labelId);
+  if (v) v.textContent = value;
+  if (b) b.style.width = Math.min(pct, 100) + "%";
+  if (l) l.textContent = label;
+}
+
+// ── LOAD DELIVERY STATS ──
 async function loadStats() {
   try {
-    const res = await fetch(API_DELIVERIES);
-    const deliveries = await res.json();
-    const total = deliveries.length;
-    const inTransit = deliveries.filter(d => d.status === "In Transit").length;
-    const delivered = deliveries.filter(d => d.status === "Delivered").length;
-    const pending = deliveries.filter(d => d.status === "Pending").length;
+    const [dRes, rRes, vRes] = await Promise.all([
+      fetch(API_DELIVERIES),
+      fetch(API_REPORTS),
+      fetch(API_VEHICLES)
+    ]);
+    const deliveries = await dRes.json();
+    const reports    = await rRes.json();
+    const vehicles   = await vRes.json();
 
+    const total      = deliveries.length;
+    const inTransit  = deliveries.filter(d => d.status === "In Transit").length;
+    const delivered  = deliveries.filter(d => d.status === "Delivered").length;
+    const pending    = deliveries.filter(d => d.status === "Pending").length;
+
+    // ── Basic stats ──
     document.getElementById("statCompleted").textContent = total;
     document.getElementById("progressCompleted").style.width = "100%";
     document.getElementById("progressCompletedLabel").textContent = delivered + " delivered · " + pending + " pending";
@@ -31,28 +50,59 @@ async function loadStats() {
     document.getElementById("progressAvgTime").style.width = deliveredPct + "%";
 
     updateWeeklyChart(pending, inTransit, delivered);
-    loadOpenIncidents();
+
+    // ── Performance Statistics (Chapter 3.2.4) ──
+
+    // 1. Delivery Success Rate = delivered / total
+    const successRate = total > 0 ? Math.round((delivered / total) * 100) : 0;
+    setStat("perfSuccessRate", "perfSuccessBar", "perfSuccessLabel",
+      successRate + "%", successRate,
+      delivered + " delivered out of " + total + " total");
+
+    // 2. Temperature Exceedance Rate = open reports / total reports
+    //    (open incidents proxy for cargo issues)
+    const totalReports = reports.length;
+    const openReports  = reports.filter(r => r.status === "Open").length;
+    const tempRate     = totalReports > 0 ? Math.round((openReports / totalReports) * 100) : 0;
+    setStat("perfTempRate", "perfTempBar", "perfTempLabel",
+      tempRate + "%", tempRate,
+      openReports + " open incidents out of " + totalReports + " reports");
+
+    // 3. Incident Resolution Rate = resolved / total reports
+    const resolvedReports = reports.filter(r => r.status === "Resolved").length;
+    const resolveRate     = totalReports > 0 ? Math.round((resolvedReports / totalReports) * 100) : 0;
+    setStat("perfResolveRate", "perfResolveBar", "perfResolveLabel",
+      resolveRate + "%", resolveRate,
+      resolvedReports + " resolved out of " + totalReports);
+
+    // 4. Fleet Utilisation = vehicles with active deliveries / total vehicles
+    const activeVehicleNames = new Set(
+      deliveries.filter(d => d.status === "In Transit").map(d => d.vehicle)
+    );
+    const totalVehicles  = vehicles.length;
+    const activeVehicles = activeVehicleNames.size;
+    const fleetRate      = totalVehicles > 0 ? Math.round((activeVehicles / totalVehicles) * 100) : 0;
+    setStat("perfFleetRate", "perfFleetBar", "perfFleetLabel",
+      fleetRate + "%", fleetRate,
+      activeVehicles + " active out of " + totalVehicles + " vehicles");
+
+    loadOpenIncidents(openReports, totalReports);
+
   } catch (err) { console.error("Stats load failed:", err); }
 }
 
-async function loadOpenIncidents() {
-  try {
-    const res = await fetch(API_REPORTS);
-    const reports = await res.json();
-    const open = reports.filter(r => r.status === "Open").length;
-    const total = reports.length;
-    const pct = total > 0 ? Math.round((open / total) * 100) : 0;
-    document.getElementById("statSpoilage").textContent = open;
-    document.getElementById("progressSpoilage").style.width = pct + "%";
-    document.getElementById("progressSpoilageLabel").textContent = pct + "% of " + total + " reports";
-  } catch (err) { console.error("Incidents load failed:", err); }
+function loadOpenIncidents(open, total) {
+  const pct = total > 0 ? Math.round((open / total) * 100) : 0;
+  document.getElementById("statSpoilage").textContent = open;
+  document.getElementById("progressSpoilage").style.width = pct + "%";
+  document.getElementById("progressSpoilageLabel").textContent = pct + "% of " + total + " reports";
 }
 
 async function loadDropdowns() {
   try {
     const [vRes, dRes] = await Promise.all([fetch(API_VEHICLES), fetch(API_DRIVERS)]);
     const vehicles = await vRes.json();
-    const drivers = await dRes.json();
+    const drivers  = await dRes.json();
     const vSel = document.getElementById("rvehicle");
     const dSel = document.getElementById("rdriver");
     vSel.innerHTML = '<option value="">Select Vehicle</option>';
@@ -134,25 +184,32 @@ async function loadReports() {
     empty.style.display = "none";
     tbody.innerHTML = "";
 
-    const role = localStorage.getItem("role") || "farmer";
-    const canResolve = ["admin", "transporter", "driver"].includes(role);
+    const role   = localStorage.getItem("role")   || "farmer";
+    const userId = localStorage.getItem("userId") || "";
     const canDelete = ["admin", "transporter"].includes(role);
 
     let open = 0, inProgress = 0, resolved = 0;
 
     reports.forEach(r => {
-      if (r.status === "Open") open++;
+      if (r.status === "Open")        open++;
       if (r.status === "In Progress") inProgress++;
-      if (r.status === "Resolved") resolved++;
+      if (r.status === "Resolved")    resolved++;
+
+      const isOwner  = r.createdBy && r.createdBy === userId;
+      const canResolve =
+        (role === "admin" || role === "transporter") ||
+        (role === "driver" && isOwner);
 
       let btns = "";
       if (r.status !== "Resolved" && canResolve) {
-        btns += '<button class="btn-resolve" onclick="resolveReport(\'' + r._id + '\')">Resolve</button>';
+        btns += '<button class="btn-resolve" onclick="resolveReport(\'' + r._id + '\')">✓ Resolve</button>';
       } else if (r.status === "Resolved") {
-        btns += '<span class="resolved-label">Done</span>';
+        btns += '<span class="resolved-label">✓ Done</span>';
+      } else if (role === "driver" && !isOwner) {
+        btns += '<span class="resolved-label" style="color:#5a7a5f">Not yours</span>';
       }
       if (canDelete) {
-        btns += '<button class="btn-delete" onclick="deleteReport(\'' + r._id + '\')">Delete</button>';
+        btns += '<button class="btn-delete" onclick="deleteReport(\'' + r._id + '\')">🗑</button>';
       }
 
       const tr = document.createElement("tr");
@@ -172,9 +229,9 @@ async function loadReports() {
 }
 
 function statusClass(s) {
-  if (s === "Open") return "status-delayed";
+  if (s === "Open")        return "status-delayed";
   if (s === "In Progress") return "status-pending";
-  if (s === "Resolved") return "status-transit";
+  if (s === "Resolved")    return "status-transit";
   return "";
 }
 
@@ -182,10 +239,10 @@ async function submitReport(e) {
   e.preventDefault();
   const data = {
     vehicle: document.getElementById("rvehicle").value,
-    driver: document.getElementById("rdriver").value,
-    issue: document.getElementById("rissue").value.trim(),
-    status: document.getElementById("rstatus").value,
-    date: new Date()
+    driver:  document.getElementById("rdriver").value,
+    issue:   document.getElementById("rissue").value.trim(),
+    status:  document.getElementById("rstatus").value,
+    date:    new Date()
   };
   const btn = document.getElementById("reportSubmitBtn");
   btn.textContent = "Submitting...";
@@ -202,7 +259,10 @@ async function submitReport(e) {
 
 async function resolveReport(id) {
   try {
-    await fetch(API_REPORTS + "/" + id, { method: "PUT", headers: authHeaders(), body: JSON.stringify({ status: "Resolved" }) });
+    const res = await fetch(API_REPORTS + "/" + id, {
+      method: "PUT", headers: authHeaders(), body: JSON.stringify({ status: "Resolved" })
+    });
+    if (res.status === 403) { showToast("You can only resolve your own reports", true); return; }
     showToast("Report resolved");
     loadReports();
     loadStats();

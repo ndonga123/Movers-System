@@ -12,7 +12,6 @@
 <body>
 <div class="layout">
 
-  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="brand-icon">🌿</div>
@@ -21,51 +20,37 @@
         <span class="brand-sub">Kenya · Agri-Logistics</span>
       </div>
     </div>
-    
+
     <nav class="sidebar-nav">
       <span class="nav-section">Monitor</span>
-      <a class="nav-item" href="dashboard.html">
-        <span class="nav-ico">⬡</span> Dashboard
-      </a>
-      <a class="nav-item" href="vehicles.html">
-        <span class="nav-ico">🚛</span> Vehicles
-      </a>
-      <a class="nav-item" href="drivers.html">
-        <span class="nav-ico">👤</span> Drivers
-      </a>
-      <a class="nav-item active" href="sensors.html">
-        <span class="nav-ico">📡</span> Sensors
-      </a>
+      <a class="nav-item" href="dashboard.html"><span class="nav-ico">⬡</span> Dashboard</a>
+      <a class="nav-item" href="vehicles.html"><span class="nav-ico">🚛</span> Vehicles</a>
+      <a class="nav-item" href="drivers.html"><span class="nav-ico">👤</span> Drivers</a>
+      <a class="nav-item active" href="sensors.html"><span class="nav-ico">📡</span> Sensors</a>
       <span class="nav-section">Insights</span>
-      <a class="nav-item" href="reports.html">
-        <span class="nav-ico">📊</span> Reports
-      </a>
-      <a class="nav-item" href="dashboard.html">
-        <span class="nav-ico">🔔</span> Alerts
-      </a>
+      <a class="nav-item" href="reports.html"><span class="nav-ico">📊</span> Reports</a>
+      <a class="nav-item" href="deliveries.html"><span class="nav-ico">📦</span> Deliveries</a>
+      <a class="nav-item" href="#" id="notifyBtn"><span class="nav-ico">🔔</span> Alerts</a>
     </nav>
 
     <div class="sidebar-footer">
       <div class="user-pill">
         <div class="user-avatar" id="userAvatar">T</div>
         <div class="user-info">
-          <p id="userName">Peter Ndonga</p>
-          <span id="userRoleLabel">Transporter</span>
+          <p id="userName">Loading...</p>
+          <span id="userRoleLabel">—</span>
         </div>
       </div>
       <button class="theme-btn" onclick="toggleDark()">🌙 Toggle Theme</button>
-      <a class="logout-link" href="login.html">↩ Logout</a>
+      <a class="logout-link" href="login.html" onclick="localStorage.clear()">↩ Logout</a>
     </div>
   </aside>
 
-  <!-- MAIN -->
   <main>
-
-    <!-- Header -->
     <div class="page-header">
       <div class="page-title">
         <h1>Sensor Data</h1>
-        <p class="sub">/ Live readings from ESP8266 · DHT11 · GPS</p>
+        <p class="sub">/ Live readings · ESP8266 · DHT11 · GPS · EMA Filtered</p>
       </div>
       <div class="live-indicator">
         <span class="pulse-dot"></span>
@@ -73,17 +58,17 @@
       </div>
     </div>
 
-    <!-- Live Gauge Cards -->
+    <!-- Gauge Cards -->
     <div class="cards">
       <div class="card stat-card">
         <span class="stat-ico">🌡</span>
-        <div class="stat-label">Temperature</div>
+        <div class="stat-label">Temperature (Filtered)</div>
         <div class="stat-val red" id="gaugeTemp">--</div>
         <div class="stat-sub">°C · Threshold: 30°C</div>
       </div>
       <div class="card stat-card">
         <span class="stat-ico">💧</span>
-        <div class="stat-label">Humidity</div>
+        <div class="stat-label">Humidity (Filtered)</div>
         <div class="stat-val blue" id="gaugeHumid">--</div>
         <div class="stat-sub">% · Normal: &lt;80%</div>
       </div>
@@ -97,14 +82,23 @@
         <span class="stat-ico">📶</span>
         <div class="stat-label">Readings Logged</div>
         <div class="stat-val" id="gaugeCount">0</div>
-        <div class="stat-sub">Since page load</div>
+        <div class="stat-sub">Total in session</div>
       </div>
     </div>
 
-    <!-- Chart + Table -->
-    <div class="sensors-grid">
+    <!-- Filter info banner -->
+    <div class="card" style="padding:12px 20px; margin-bottom:0; display:flex; align-items:center; gap:12px;">
+      <span style="font-size:18px;">🔬</span>
+      <div>
+        <strong style="color:var(--accent)">Data Filtering Active</strong>
+        <span style="color:var(--text-muted); font-size:12px; margin-left:8px;">
+          Exponential Moving Average (α=0.3) applied to remove sensor noise before display and alerts
+        </span>
+      </div>
+    </div>
 
-      <!-- Live Chart -->
+    <!-- Chart + Alert Log -->
+    <div class="sensors-grid">
       <div class="card big">
         <div class="card-header">
           <h3>Live Sensor Chart</h3>
@@ -115,7 +109,6 @@
         </div>
       </div>
 
-      <!-- Alert Log -->
       <div class="card">
         <div class="card-header">
           <h3>Alert Log</h3>
@@ -127,11 +120,14 @@
       </div>
     </div>
 
-    <!-- Sensor History Table -->
+    <!-- History Table -->
     <div class="card big">
       <div class="card-header">
         <h3>Sensor Reading History</h3>
-        <div style="display:flex; gap:8px;">
+        <div style="display:flex; gap:8px; align-items:center;">
+          <select id="vehicleFilter" class="filter-select" onchange="filterByVehicle()">
+            <option value="">All Vehicles</option>
+          </select>
           <span class="card-tag" id="readingCountTag">0 READINGS</span>
           <button class="btn-clear" onclick="clearTable()">Clear</button>
         </div>
@@ -141,8 +137,9 @@
           <thead>
             <tr>
               <th>Vehicle</th>
-              <th>Temp (°C)</th>
-              <th>Humidity (%)</th>
+              <th>Raw Temp</th>
+              <th>Filtered Temp</th>
+              <th>Humidity</th>
               <th>GPS</th>
               <th>Time</th>
               <th>Status</th>
@@ -156,11 +153,13 @@
   </main>
 </div>
 
+<div id="toast" class="toast" style="display:none"></div>
+
 <script src="js/sensors.js"></script>
+<script src="js/role-guard.js"></script>
 
 <footer class="footer">
   © 2026 IoT Movers System &nbsp;|&nbsp; Real-time Fleet Tracking
 </footer>
-
 </body>
 </html>

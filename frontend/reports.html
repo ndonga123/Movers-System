@@ -12,7 +12,6 @@
 <body>
 <div class="layout">
 
-  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="brand-icon">🌿</div>
@@ -21,7 +20,6 @@
         <span class="brand-sub">Kenya · Agri-Logistics</span>
       </div>
     </div>
-
 
     <nav class="sidebar-nav">
       <span class="nav-section">Monitor</span>
@@ -32,15 +30,15 @@
       <span class="nav-section">Insights</span>
       <a class="nav-item active" href="reports.html"><span class="nav-ico">📊</span> Reports</a>
       <a class="nav-item" href="deliveries.html"><span class="nav-ico">📦</span> Deliveries</a>
-      <a class="nav-item" href="dashboard.html"><span class="nav-ico">🔔</span> Alerts</a>
+      <a class="nav-item" href="#" id="notifyBtn"><span class="nav-ico">🔔</span> Alerts</a>
     </nav>
 
     <div class="sidebar-footer">
       <div class="user-pill">
         <div class="user-avatar" id="userAvatar">T</div>
         <div class="user-info">
-          <p id="userName">Peter Ndonga</p>
-          <span id="userRoleLabel">Transporter</span>
+          <p id="userName">Loading...</p>
+          <span id="userRoleLabel">—</span>
         </div>
       </div>
       <button class="theme-btn" onclick="toggleDark()">🌙 Toggle Theme</button>
@@ -48,18 +46,17 @@
     </div>
   </aside>
 
-  <!-- MAIN -->
   <main>
 
     <div class="page-header">
       <div class="page-title">
         <h1>Analytics & Reports</h1>
-        <p class="sub">/ Delivery performance · Incident tracking · Live data</p>
+        <p class="sub">/ Delivery performance · Incident tracking · Descriptive statistics</p>
       </div>
       <button class="btn-export" onclick="exportCSV()">↓ Export CSV</button>
     </div>
 
-    <!-- Stats from real DB -->
+    <!-- Delivery Stats -->
     <div class="reports-stats">
       <div class="card stat-card">
         <span class="stat-ico">📦</span>
@@ -110,38 +107,78 @@
       </div>
     </div>
 
-    <!-- Incident Reports Table + Form -->
-    <div class="reports-grid">
+    <!-- Performance Statistics (Chapter 3.2.4) -->
+    <div class="card big" style="margin-bottom: 0;">
+      <div class="card-header">
+        <h3>Performance Statistics</h3>
+        <span class="card-tag">DESCRIPTIVE ANALYTICS</span>
+      </div>
+      <div class="reports-stats" style="padding: 16px 0 0 0;">
 
+        <div class="card stat-card">
+          <span class="stat-ico">📈</span>
+          <div class="stat-label">Delivery Success Rate</div>
+          <div class="stat-val green" id="perfSuccessRate">--%</div>
+          <div class="stat-progress">
+            <div class="progress-track">
+              <div class="progress-fill green-fill" id="perfSuccessBar" style="width:0%"></div>
+            </div>
+            <span class="progress-label" id="perfSuccessLabel">delivered / total</span>
+          </div>
+        </div>
+
+        <div class="card stat-card">
+          <span class="stat-ico">🔥</span>
+          <div class="stat-label">Temp Exceedance Rate</div>
+          <div class="stat-val red" id="perfTempRate">--%</div>
+          <div class="stat-progress">
+            <div class="progress-track">
+              <div class="progress-fill red-fill" id="perfTempBar" style="width:0%"></div>
+            </div>
+            <span class="progress-label" id="perfTempLabel">alerts / total reports</span>
+          </div>
+        </div>
+
+        <div class="card stat-card">
+          <span class="stat-ico">📋</span>
+          <div class="stat-label">Incident Resolution Rate</div>
+          <div class="stat-val blue" id="perfResolveRate">--%</div>
+          <div class="stat-progress">
+            <div class="progress-track">
+              <div class="progress-fill blue-fill" id="perfResolveBar" style="width:0%"></div>
+            </div>
+            <span class="progress-label" id="perfResolveLabel">resolved / total</span>
+          </div>
+        </div>
+
+        <div class="card stat-card">
+          <span class="stat-ico">🚛</span>
+          <div class="stat-label">Fleet Utilisation</div>
+          <div class="stat-val yellow" id="perfFleetRate">--%</div>
+          <div class="stat-progress">
+            <div class="progress-track">
+              <div class="progress-fill yellow-fill" id="perfFleetBar" style="width:0%"></div>
+            </div>
+            <span class="progress-label" id="perfFleetLabel">active / total vehicles</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="reports-grid">
       <div class="card big">
         <div class="card-header">
-          <h3>Incident Reports</h3>
-          <span class="card-tag" id="reportCountTag">0 REPORTS</span>
+          <h3>Delivery Status Overview</h3>
+          <span class="card-tag live">LIVE DATA</span>
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Vehicle</th>
-                <th>Driver</th>
-                <th>Issue</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="reportList"></tbody>
-          </table>
-          <div class="empty-state" id="emptyReports" style="display:none">
-            <div class="empty-icon">📋</div>
-            <p>No reports yet.<br/>Submit one using the form.</p>
-          </div>
+        <div class="chart-wrap">
+          <canvas id="weeklyChart"></canvas>
         </div>
       </div>
 
-      <!-- Create Report Form + Incident Chart -->
       <div style="display:flex; flex-direction:column; gap:20px;">
-
         <div class="card">
           <div class="card-header">
             <h3>Incident Breakdown</h3>
@@ -157,26 +194,22 @@
             <h3>Create Report</h3>
           </div>
           <form class="report-form" id="reportForm" onsubmit="submitReport(event)">
-
             <div class="form-group">
               <label>Vehicle</label>
               <select id="rvehicle" class="form-select" required>
                 <option value="">— Select Vehicle —</option>
               </select>
             </div>
-
             <div class="form-group">
               <label>Driver</label>
               <select id="rdriver" class="form-select" required>
                 <option value="">— Select Driver —</option>
               </select>
             </div>
-
             <div class="form-group">
               <label>Issue Description</label>
               <textarea id="rissue" placeholder="Describe the issue..." rows="3" required></textarea>
             </div>
-
             <div class="form-group">
               <label>Status</label>
               <select id="rstatus" class="form-select">
@@ -185,13 +218,39 @@
                 <option value="Resolved">Resolved</option>
               </select>
             </div>
-
             <button type="submit" class="btn-submit" id="reportSubmitBtn">Submit Report</button>
           </form>
         </div>
-
       </div>
     </div>
+
+    <!-- Incident Reports Table -->
+    <div class="card big">
+      <div class="card-header">
+        <h3>Incident Reports</h3>
+        <span class="card-tag" id="reportCountTag">0 REPORTS</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Vehicle</th>
+              <th>Driver</th>
+              <th>Issue</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="reportList"></tbody>
+        </table>
+        <div class="empty-state" id="emptyReports" style="display:none">
+          <div class="empty-icon">📋</div>
+          <p>No reports yet.<br/>Submit one using the form.</p>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -201,24 +260,6 @@
 <script src="js/role-guard.js"></script>
 <script>
   function toggleDark() { document.body.classList.toggle("dark"); }
-
-  function switchRole(role, btn) {
-    document.querySelectorAll(".role-btn").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    const avatar = document.getElementById("userAvatar");
-    const label  = document.getElementById("userRoleLabel");
-    if (role === "farmer") {
-      avatar.textContent = "F";
-      avatar.style.background = "#f5c842";
-      avatar.style.color = "#111";
-      label.textContent = "Farmer";
-    } else {
-      avatar.textContent = "T";
-      avatar.style.background = "#3ddc6e";
-      avatar.style.color = "#111";
-      label.textContent = "Transporter";
-    }
-  }
 </script>
 
 <footer class="footer">
