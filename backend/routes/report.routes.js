@@ -1,7 +1,6 @@
 const router = require("express").Router();
 const Report = require("../models/Report");
-const { auth, requireRole } = require("../middleware/auth");
-
+const { auth, requireRole } = require("../auth");
 // GET all reports — public
 router.get("/", async (req, res) => {
   try {
