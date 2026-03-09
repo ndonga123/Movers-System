@@ -1,19 +1,19 @@
-const express  = require("express");
-const router   = express.Router();
-const Delivery = require("../models/Delivery");
+const express               = require("express");
+const router                = express.Router();
+const Delivery              = require("../models/Delivery");
+const { auth, requireRole } = require("../auth");
 
-// GET all deliveries
+// GET all deliveries — public
 router.get("/", async (req, res) => {
   try {
-    const data = await Delivery.find();
-    res.json(data);
+    res.json(await Delivery.find().sort({ createdAt: -1 }));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// POST add delivery
-router.post("/", async (req, res) => {
+// POST add delivery — admin and transporter only
+router.post("/", auth, requireRole("admin", "transporter"), async (req, res) => {
   try {
     const d = await Delivery.create(req.body);
     res.json(d);
@@ -22,8 +22,8 @@ router.post("/", async (req, res) => {
   }
 });
 
-// PUT update delivery
-router.put("/:id", async (req, res) => {
+// PUT update delivery — admin and transporter only
+router.put("/:id", auth, requireRole("admin", "transporter"), async (req, res) => {
   try {
     const d = await Delivery.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(d);
@@ -32,8 +32,8 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// DELETE delivery
-router.delete("/:id", async (req, res) => {
+// DELETE delivery — admin only
+router.delete("/:id", auth, requireRole("admin"), async (req, res) => {
   try {
     await Delivery.findByIdAndDelete(req.params.id);
     res.json({ msg: "deleted" });

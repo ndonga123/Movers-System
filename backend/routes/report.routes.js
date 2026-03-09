@@ -1,6 +1,7 @@
-const router = require("express").Router();
-const Report = require("../models/Report");
+const router                = require("express").Router();
+const Report                = require("../models/Report");
 const { auth, requireRole } = require("../auth");
+
 // GET all reports — public
 router.get("/", async (req, res) => {
   try {
@@ -10,8 +11,8 @@ router.get("/", async (req, res) => {
   }
 });
 
-// POST add report — all authenticated users
-router.post("/", auth, async (req, res) => {
+// POST add report — admin, transporter, driver only (NOT farmer)
+router.post("/", auth, requireRole("admin", "transporter", "driver"), async (req, res) => {
   try {
     const r = new Report({
       ...req.body,
@@ -26,14 +27,15 @@ router.post("/", auth, async (req, res) => {
 });
 
 // PUT resolve report
-// - Admin/Transporter: can resolve any report
-// - Driver: can only resolve their own reports
+// - Admin/Transporter: any report
+// - Driver: only their own
+// - Farmer: never
 router.put("/:id", auth, async (req, res) => {
   try {
     const report = await Report.findById(req.params.id);
     if (!report) return res.status(404).json({ error: "Report not found" });
 
-    const role = req.user.role;
+    const role    = req.user.role;
     const isOwner = report.createdBy && report.createdBy.toString() === req.user.id;
 
     if (role === "farmer") {
