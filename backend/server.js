@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors    = require("cors");
 const http    = require("http");
+const https   = require("https");
 const path    = require("path");
 const { Server } = require("socket.io");
 
@@ -28,24 +29,36 @@ app.use("/api/reports",    require("./routes/report.routes.js"));
 app.use("/api/drivers",    require("./routes/drivers.routes.js"));
 app.use("/api/sensors",    require("./routes/sensor.routes.js"));
 
-// TEMP DEBUG — remove after ORS is confirmed working
-app.get("/api/test-ors", async (req, res) => {
-  try {
-    const fetch = (...args) => import("node-fetch").then(({ default: f }) => f(...args));
-    const key = process.env.ORS_KEY;
-    if (!key) return res.json({ error: "ORS_KEY is MISSING from environment" });
+// TEMP DEBUG — remove after ORS confirmed working
+app.get("/api/test-ors", (req, res) => {
+  const key = process.env.ORS_KEY;
+  if (!key) return res.json({ error: "ORS_KEY is MISSING" });
 
-    const result = await fetch("https://api.openrouteservice.org/v2/directions/driving-car/geojson", {
-      method: "POST",
-      headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
-      body: JSON.stringify({ coordinates: [[36.6867562, -1.4303485], [40.7056153, 3.2285332]] })
+  const payload = JSON.stringify({
+    coordinates: [[36.6867562, -1.4303485], [40.7056153, 3.2285332]]
+  });
+
+  const options = {
+    hostname: "api.openrouteservice.org",
+    path:     "/v2/directions/driving-car/geojson",
+    method:   "POST",
+    headers:  {
+      "Authorization":  "Bearer " + key,
+      "Content-Type":   "application/json",
+      "Content-Length": Buffer.byteLength(payload)
+    }
+  };
+
+  const req = https.request(options, (orsRes) => {
+    let data = "";
+    orsRes.on("data", chunk => data += chunk);
+    orsRes.on("end", () => {
+      res.json({ status: orsRes.statusCode, key_prefix: key.substring(0, 10) + "...", body: data.substring(0, 500) });
     });
-
-    const text = await result.text();
-    res.json({ status: result.status, key_prefix: key.substring(0, 10) + "...", body: text.substring(0, 500) });
-  } catch (err) {
-    res.json({ error: err.message });
-  }
+  });
+  req.on("error", err => res.json({ error: err.message }));
+  req.write(payload);
+  req.end();
 });
 
 // Socket server
