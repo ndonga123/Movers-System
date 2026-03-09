@@ -14,13 +14,11 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 
-// Serve frontend
 app.use(express.static(path.join(__dirname, "../frontend")));
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
 
-// API routes
 app.use("/api/auth",       require("./routes/auth.routes.js"));
 app.use("/api/summary",    require("./routes/summary.routes.js"));
 app.use("/api/deliveries", require("./routes/delivery.routes.js"));
@@ -29,7 +27,7 @@ app.use("/api/reports",    require("./routes/report.routes.js"));
 app.use("/api/drivers",    require("./routes/drivers.routes.js"));
 app.use("/api/sensors",    require("./routes/sensor.routes.js"));
 
-// TEMP DEBUG — remove after ORS confirmed working
+// TEMP DEBUG
 app.get("/api/test-ors", (req, res) => {
   const key = process.env.ORS_KEY;
   if (!key) return res.json({ error: "ORS_KEY is MISSING" });
@@ -49,19 +47,18 @@ app.get("/api/test-ors", (req, res) => {
     }
   };
 
-  const req = https.request(options, (orsRes) => {
+  const orsReq = https.request(options, (orsRes) => {
     let data = "";
     orsRes.on("data", chunk => data += chunk);
     orsRes.on("end", () => {
       res.json({ status: orsRes.statusCode, key_prefix: key.substring(0, 10) + "...", body: data.substring(0, 500) });
     });
   });
-  req.on("error", err => res.json({ error: err.message }));
-  req.write(payload);
-  req.end();
+  orsReq.on("error", err => res.json({ error: err.message }));
+  orsReq.write(payload);
+  orsReq.end();
 });
 
-// Socket server
 const server = http.createServer(app);
 new Server(server, { cors: { origin: "*" } });
 
