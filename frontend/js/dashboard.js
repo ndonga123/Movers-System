@@ -13,11 +13,13 @@ let startMarker = null;
 let endMarker   = null;
 
 // ── ROUTE DEVIATION SETTINGS ──
-// Haversine distance threshold in kilometres
-const DEVIATION_THRESHOLD_KM = 0.5; // 500 metres
+const DEVIATION_THRESHOLD_KM = 0.5;
 let deviationAlerted = false;
 
-// ── HAVERSINE DISTANCE (km) between two lat/lng points ──
+// ── ALERT BADGE COUNT ──
+let alertCount = 0;
+
+// ── HAVERSINE DISTANCE ──
 function haversineKm(lat1, lng1, lat2, lng2) {
   const R    = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -30,81 +32,105 @@ function haversineKm(lat1, lng1, lat2, lng2) {
 }
 
 // ── CHECK DEVIATION FROM ROUTE ──
-// Finds the minimum distance from current position to any point on the route
 function checkDeviation(currentLat, currentLng) {
   if (!currentRoute.length) return;
-
   let minDist = Infinity;
   for (const point of currentRoute) {
     const d = haversineKm(currentLat, currentLng, point[0], point[1]);
     if (d < minDist) minDist = d;
   }
-
   if (minDist > DEVIATION_THRESHOLD_KM && !deviationAlerted) {
     deviationAlerted = true;
     const distM = Math.round(minDist * 1000);
-    pushNotification(
-      "⚠️ Route deviation detected! " + activeVehicleName +
-      " is " + distM + "m off route"
-    );
+    pushAlert("📍", `Route deviation! ${activeVehicleName} is ${distM}m off route`);
     console.warn("ROUTE DEVIATION:", distM + "m from expected route");
   }
-
-  // Reset alert when vehicle returns within threshold
   if (minDist <= DEVIATION_THRESHOLD_KM) {
     deviationAlerted = false;
   }
 }
 
-// ---------------- NOTIFICATIONS ----------------
-const notifyBtn = document.getElementById("notifyBtn");
-const panel     = document.getElementById("notifications");
-let lastAlert   = "";
+// ── NOTIFICATIONS PANEL TOGGLE ──
+document.addEventListener("DOMContentLoaded", () => {
+  const notifyBtn = document.getElementById("notifyBtn");
+  const panel     = document.getElementById("notifications");
+  const badge     = document.getElementById("alertBadge");
 
-if (notifyBtn) {
-  notifyBtn.onclick = () => {
-    panel.style.display =
-      panel.style.display === "block" ? "none" : "block";
-  };
-}
+  if (notifyBtn) {
+    notifyBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      panel.style.display = panel.style.display === "block" ? "none" : "block";
+      // Clear badge when panel opened
+      if (panel.style.display === "block") {
+        alertCount = 0;
+        if (badge) badge.style.display = "none";
+      }
+    });
+  }
+});
 
-function pushNotification(msg) {
-  if (!panel) return;
-  if (msg === lastAlert) return;
-  lastAlert = msg;
+// ── PUSH ALERT — called automatically when events occur ──
+let lastAlertMsg = "";
+function pushAlert(icon, message) {
+  const panel = document.getElementById("notifications");
+  const list  = document.getElementById("alertList");
+  const badge = document.getElementById("alertBadge");
+  if (!panel || !list) return;
+
+  // Prevent duplicate consecutive alerts
+  const fullMsg = icon + " " + message;
+  if (fullMsg === lastAlertMsg) return;
+  lastAlertMsg = fullMsg;
+
+  // Remove placeholder text
+  const placeholder = list.querySelector("p");
+  if (placeholder) placeholder.remove();
+
+  const time = new Date().toLocaleTimeString();
+  const item = document.createElement("div");
+  item.style.cssText = "display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #1a3020;font-family:'Space Mono',monospace;font-size:12px;";
+  item.innerHTML =
+    '<span style="color:#c8e6c9;">' + icon + " " + message + '</span>' +
+    '<span style="color:#3a5a40;font-size:10px;margin-left:12px;white-space:nowrap;">' + time + '</span>';
+  list.prepend(item);
+
+  // Keep max 10 alerts
+  while (list.children.length > 10) list.removeChild(list.lastChild);
+
+  // Show panel automatically
   panel.style.display = "block";
-  const p = document.createElement("p");
-  p.textContent = msg;
-  p.className   = "alert-msg";
-  panel.prepend(p);
-}
 
-// ---------------- DARK MODE + MAP TILES ----------------
-function toggleDark() {
-  document.body.classList.toggle("dark");
-  isDark = document.body.classList.contains("dark");
-  if (isDark) {
-    map.removeLayer(lightLayer);
-    darkLayer.addTo(map);
-  } else {
-    map.removeLayer(darkLayer);
-    lightLayer.addTo(map);
+  // Update badge count (shown when panel is hidden)
+  alertCount++;
+  if (badge) {
+    badge.textContent   = alertCount;
+    badge.style.display = "inline";
   }
 }
 
-// ---------------- CUSTOM ICONS ----------------
+// ── CLEAR ALERTS ──
+function clearAlerts() {
+  const list  = document.getElementById("alertList");
+  const badge = document.getElementById("alertBadge");
+  if (list)  list.innerHTML = '<p style="color:#5a7a5f;font-size:12px;font-family:\'Space Mono\',monospace;margin:0;">No alerts yet.</p>';
+  if (badge) { badge.style.display = "none"; }
+  alertCount   = 0;
+  lastAlertMsg = "";
+}
+
+// ── DARK MODE + MAP TILES ──
+function toggleDark() {
+  document.body.classList.toggle("dark");
+  isDark = document.body.classList.contains("dark");
+  if (isDark) { map.removeLayer(lightLayer); darkLayer.addTo(map); }
+  else        { map.removeLayer(darkLayer);  lightLayer.addTo(map); }
+}
+
+// ── CUSTOM ICONS ──
 function makeIcon(color, label) {
   return L.divIcon({
     className: "",
-    html: `
-      <div style="
-        background:${color};color:#fff;border:2px solid #fff;
-        border-radius:50% 50% 50% 0;transform:rotate(-45deg);
-        width:28px;height:28px;display:flex;align-items:center;
-        justify-content:center;font-size:12px;font-weight:800;
-        box-shadow:0 2px 8px rgba(0,0,0,0.4);">
-        <span style="transform:rotate(45deg)">${label}</span>
-      </div>`,
+    html: `<div style="background:${color};color:#fff;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,0.4);"><span style="transform:rotate(45deg)">${label}</span></div>`,
     iconSize: [28, 28], iconAnchor: [14, 28], popupAnchor: [0, -30]
   });
 }
@@ -112,25 +138,12 @@ function makeIcon(color, label) {
 function makeDotIcon() {
   return L.divIcon({
     className: "",
-    html: `
-      <div style="
-        background:#5bc8f5;border:3px solid #fff;border-radius:50%;
-        width:18px;height:18px;
-        box-shadow:0 0 10px rgba(91,200,245,0.8),0 0 20px rgba(91,200,245,0.4);
-        animation:pulse-dot 1.5s infinite;">
-      </div>
-      <style>
-        @keyframes pulse-dot {
-          0%   { box-shadow:0 0 0 0 rgba(91,200,245,0.6); }
-          70%  { box-shadow:0 0 0 10px rgba(91,200,245,0); }
-          100% { box-shadow:0 0 0 0 rgba(91,200,245,0); }
-        }
-      </style>`,
+    html: `<div style="background:#5bc8f5;border:3px solid #fff;border-radius:50%;width:18px;height:18px;box-shadow:0 0 10px rgba(91,200,245,0.8),0 0 20px rgba(91,200,245,0.4);animation:pulse-dot 1.5s infinite;"></div><style>@keyframes pulse-dot{0%{box-shadow:0 0 0 0 rgba(91,200,245,0.6)}70%{box-shadow:0 0 0 10px rgba(91,200,245,0)}100%{box-shadow:0 0 0 0 rgba(91,200,245,0)}}</style>`,
     iconSize: [18, 18], iconAnchor: [9, 9]
   });
 }
 
-// ---------------- SUMMARY ----------------
+// ── SUMMARY (temp + humidity alerts) ──
 async function loadSummary() {
   try {
     const res  = await fetch(`${API}/summary`);
@@ -139,14 +152,15 @@ async function loadSummary() {
     document.getElementById("temp").textContent = data.temp + " °C";
     document.getElementById("hum").textContent  = data.humidity + " %";
     updateChart(data.temp, data.humidity);
-    if (data.temp > 30)     pushNotification("🔥 High temperature!");
-    if (data.humidity > 80) pushNotification("💧 High humidity!");
+
+    if (data.temp > 30)     pushAlert("🌡️", `High temperature: ${data.temp}°C`);
+    if (data.humidity > 80) pushAlert("💧", `High humidity: ${data.humidity}%`);
   } catch (err) {
     console.error("FAILED TO LOAD SUMMARY:", err);
   }
 }
 
-// ---------------- VEHICLES ----------------
+// ── VEHICLES ──
 async function loadVehicleList() {
   try {
     const res      = await fetch(`${API}/vehicles`);
@@ -169,35 +183,21 @@ async function loadVehicleList() {
 
       card.addEventListener("click", () => {
         if (!v.route || v.route.length < 3) {
-          pushNotification(`⚠️ ${v.name} has no route set yet`);
+          pushAlert("⚠️", `${v.name} has no route set yet`);
           return;
         }
-
         if (routeLine)   map.removeLayer(routeLine);
         if (startMarker) map.removeLayer(startMarker);
         if (endMarker)   map.removeLayer(endMarker);
         if (movingDot)   map.removeLayer(movingDot);
 
         const coords = v.route.map(p => [parseFloat(p.lat), parseFloat(p.lng)]);
-
-        routeLine = L.polyline(coords, {
-          color: "#3ddc6e", weight: 4, opacity: 0.8
-        }).addTo(map);
-
+        routeLine = L.polyline(coords, { color: "#3ddc6e", weight: 4, opacity: 0.8 }).addTo(map);
         map.fitBounds(routeLine.getBounds());
+        startMarker = L.marker(coords[0], { icon: makeIcon("#3ddc6e", "A") }).addTo(map).bindPopup(`<b>🟢 From</b><br>${v.from || "Start"}`).openPopup();
+        endMarker   = L.marker(coords[coords.length - 1], { icon: makeIcon("#e84545", "B") }).addTo(map).bindPopup(`<b>🔴 To</b><br>${v.to || "Destination"}`);
+        movingDot   = L.marker(coords[0], { icon: makeDotIcon() }).addTo(map);
 
-        startMarker = L.marker(coords[0], { icon: makeIcon("#3ddc6e", "A") })
-          .addTo(map)
-          .bindPopup(`<b>🟢 From</b><br>${v.from || "Start"}`)
-          .openPopup();
-
-        endMarker = L.marker(coords[coords.length - 1], { icon: makeIcon("#e84545", "B") })
-          .addTo(map)
-          .bindPopup(`<b>🔴 To</b><br>${v.to || "Destination"}`);
-
-        movingDot = L.marker(coords[0], { icon: makeDotIcon() }).addTo(map);
-
-        // Reset for new vehicle
         currentRoute      = coords;
         progress          = 0;
         deviationAlerted  = false;
@@ -205,8 +205,7 @@ async function loadVehicleList() {
 
         const label = document.getElementById("routeLabel");
         if (label) label.textContent = `${v.name}: ${v.from} → ${v.to}`;
-
-        pushNotification(`📍 Showing route for ${v.name}`);
+        pushAlert("📍", `Now tracking ${v.name}`);
       });
 
       card.querySelector(".delete-btn").addEventListener("click", e => {
@@ -221,7 +220,7 @@ async function loadVehicleList() {
   }
 }
 
-// ---------------- DELETE ----------------
+// ── DELETE ──
 function deleteVehicle(id, name) {
   if (!confirm(`Delete vehicle "${name}"?`)) return;
   fetch(`${API}/vehicles/${id}`, { method: "DELETE" }).then(() => {
@@ -235,7 +234,7 @@ function deleteVehicle(id, name) {
   });
 }
 
-// ---------------- CHART ----------------
+// ── CHART ──
 let sensorChart;
 const tempData = [];
 const humData  = [];
@@ -272,48 +271,32 @@ function updateChart(temp, hum) {
   sensorChart.update();
 }
 
-// ---------------- MAP ----------------
+// ── MAP ──
 function initMap() {
   map = L.map("map").setView([-1.2921, 36.8219], 7);
-
-  lightLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "© OpenStreetMap"
-  });
-
-  darkLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-    attribution: "© OpenStreetMap © CARTO"
-  });
-
+  lightLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap" });
+  darkLayer  = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { attribution: "© OpenStreetMap © CARTO" });
   lightLayer.addTo(map);
 }
 
-// ---------------- SMOOTH MOVEMENT + DEVIATION CHECK ----------------
+// ── SMOOTH MOVEMENT + DEVIATION CHECK ──
 function moveVehicle() {
   if (!currentRoute.length || !movingDot) return;
-
   const steps = 900;
   progress++;
-
   let t = progress / steps;
   if (t >= 1) { progress = 0; t = 0; }
-
   const i    = Math.floor(t * (currentRoute.length - 1));
   const p1   = currentRoute[i];
   const p2   = currentRoute[i + 1] || p1;
   const frac = (t * currentRoute.length) % 1;
-
-  const lat = p1[0] + (p2[0] - p1[0]) * frac;
-  const lng = p1[1] + (p2[1] - p1[1]) * frac;
-
+  const lat  = p1[0] + (p2[0] - p1[0]) * frac;
+  const lng  = p1[1] + (p2[1] - p1[1]) * frac;
   movingDot.setLatLng([lat, lng]);
-
-  // ── CHECK ROUTE DEVIATION every 10 steps ──
-  if (progress % 10 === 0) {
-    checkDeviation(lat, lng);
-  }
+  if (progress % 10 === 0) checkDeviation(lat, lng);
 }
 
-// ---------------- INIT ----------------
+// ── INIT ──
 document.addEventListener("DOMContentLoaded", () => {
   initChart();
   initMap();

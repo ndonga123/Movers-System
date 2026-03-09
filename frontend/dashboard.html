@@ -10,19 +10,13 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
 <div class="layout">
-
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="brand-icon">🌿</div>
-      <div>
-        <span class="brand-name">IoT Movers</span>
-        <span class="brand-sub">Kenya · Agri-Logistics</span>
-      </div>
+      <div><span class="brand-name">IoT Movers</span><span class="brand-sub">Kenya · Agri-Logistics</span></div>
     </div>
-
     <nav class="sidebar-nav">
       <span class="nav-section">Monitor</span>
       <a class="nav-item active" href="dashboard.html"><span class="nav-ico">⬡</span> Dashboard</a>
@@ -32,16 +26,15 @@
       <span class="nav-section">Insights</span>
       <a class="nav-item" href="reports.html"><span class="nav-ico">📊</span> Reports</a>
       <a class="nav-item" href="deliveries.html"><span class="nav-ico">📦</span> Deliveries</a>
-      <a class="nav-item" href="#" id="notifyBtn"><span class="nav-ico">🔔</span> Alerts</a>
+      <a class="nav-item" href="#" id="notifyBtn">
+        <span class="nav-ico">🔔</span> Alerts
+        <span id="alertBadge" style="display:none;background:#e84545;color:#fff;border-radius:50%;font-size:10px;padding:1px 6px;margin-left:4px;font-weight:700;">0</span>
+      </a>
     </nav>
-
     <div class="sidebar-footer">
       <div class="user-pill">
         <div class="user-avatar" id="userAvatar">T</div>
-        <div class="user-info">
-          <p id="userName">Loading...</p>
-          <span id="userRoleLabel">—</span>
-        </div>
+        <div class="user-info"><p id="userName">Loading...</p><span id="userRoleLabel">—</span></div>
       </div>
       <button class="theme-btn" onclick="toggleDark()">🌙 Toggle Theme</button>
       <a class="logout-link" href="login.html" onclick="localStorage.clear()">↩ Logout</a>
@@ -54,68 +47,42 @@
         <h1>Dashboard</h1>
         <p class="sub">/ Live fleet overview · Sensor monitoring · Route tracking</p>
       </div>
-      <div class="live-indicator">
-        <span class="pulse-dot"></span>
-        LIVE &nbsp;<span id="liveTime">--:--:--</span>
-      </div>
+      <div class="live-indicator"><span class="pulse-dot"></span>LIVE &nbsp;<span id="liveTime">--:--:--</span></div>
     </div>
 
-    <div id="notifications" class="notifications-panel" style="display:none"></div>
+    <!-- LIVE ALERTS PANEL -->
+    <div id="notifications" style="display:none;background:#0f1f14;border:1px solid #2a4a30;border-radius:8px;padding:12px 16px;margin-bottom:16px;max-height:220px;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <strong style="font-family:'Space Mono',monospace;font-size:12px;color:#3ddc6e;">🔔 Live Alerts</strong>
+        <button onclick="clearAlerts()" style="font-size:11px;background:none;border:1px solid #2a4a30;color:#5a7a5f;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:'Space Mono',monospace;">Clear</button>
+      </div>
+      <div id="alertList"><p style="color:#5a7a5f;font-size:12px;font-family:'Space Mono',monospace;margin:0;">No alerts yet.</p></div>
+    </div>
 
     <div class="cards">
-      <div class="card stat-card">
-        <span class="stat-ico">📍</span>
-        <div class="stat-label">GPS Location</div>
-        <div class="stat-val mono green" id="gps">--</div>
-      </div>
-      <div class="card stat-card">
-        <span class="stat-ico">🌡</span>
-        <div class="stat-label">Temperature</div>
-        <div class="stat-val red" id="temp">--</div>
-      </div>
-      <div class="card stat-card">
-        <span class="stat-ico">💧</span>
-        <div class="stat-label">Humidity</div>
-        <div class="stat-val blue" id="hum">--</div>
-      </div>
-      <div class="card stat-card">
-        <span class="stat-ico">🚛</span>
-        <div class="stat-label">Active Vehicles</div>
-        <div class="stat-val green" id="activeVehicles">--</div>
-      </div>
+      <div class="card stat-card"><span class="stat-ico">📍</span><div class="stat-label">GPS Location</div><div class="stat-val mono green" id="gps">--</div></div>
+      <div class="card stat-card"><span class="stat-ico">🌡</span><div class="stat-label">Temperature</div><div class="stat-val red" id="temp">--</div></div>
+      <div class="card stat-card"><span class="stat-ico">💧</span><div class="stat-label">Humidity</div><div class="stat-val blue" id="hum">--</div></div>
+      <div class="card stat-card"><span class="stat-ico">🚛</span><div class="stat-label">Active Vehicles</div><div class="stat-val green" id="activeVehicles">--</div></div>
     </div>
 
     <div class="dash-grid">
       <div class="card big">
-        <div class="card-header">
-          <h3>Live Sensor Readings</h3>
-          <span class="card-tag live">POLLING 5s</span>
-        </div>
-        <div class="chart-wrap">
-          <canvas id="sensorChart"></canvas>
-        </div>
+        <div class="card-header"><h3>Live Sensor Readings</h3><span class="card-tag live">POLLING 5s</span></div>
+        <div class="chart-wrap"><canvas id="sensorChart"></canvas></div>
       </div>
-
       <div class="card">
-        <div class="card-header">
-          <h3>Fleet Vehicles</h3>
-          <a href="vehicles.html" class="card-tag" style="text-decoration:none">MANAGE →</a>
-        </div>
+        <div class="card-header"><h3>Fleet Vehicles</h3><a href="vehicles.html" class="card-tag" style="text-decoration:none">MANAGE →</a></div>
         <div id="vehicleList" class="vehicle-list"></div>
       </div>
     </div>
 
     <div class="card big">
-      <div class="card-header">
-        <h3>Live Route Map</h3>
-        <span class="card-tag" id="routeLabel">Click a vehicle to show route</span>
-      </div>
+      <div class="card-header"><h3>Live Route Map</h3><span class="card-tag" id="routeLabel">Click a vehicle to show route</span></div>
       <div id="map"></div>
     </div>
   </main>
 </div>
-
-<div id="alerts" style="display:none"></div>
 
 <script src="js/dashboard.js"></script>
 <script src="js/role-guard.js"></script>
@@ -127,9 +94,6 @@
   setInterval(updateClock, 1000);
   updateClock();
 </script>
-
-<footer class="footer">
-  © 2026 IoT Movers System &nbsp;|&nbsp; Real-time Fleet Tracking
-</footer>
+<footer class="footer">© 2026 IoT Movers System &nbsp;|&nbsp; Real-time Fleet Tracking</footer>
 </body>
 </html>
